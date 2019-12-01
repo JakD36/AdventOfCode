@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <math.h>
 
+int FuelForMass(int mass);
+
 int main()
 {
     char filepath[] = "Day1/input.txt";
@@ -14,7 +16,21 @@ int main()
         int mass;
         while(fscanf(file,"%d\n",&mass) != EOF)
         {       
-            requiredFuel += (int)floor((float)mass / 3.0f) - 2;
+            int moduleFuel = FuelForMass(mass);
+            int fuel = moduleFuel;
+            while(true)
+            {
+                fuel = FuelForMass(fuel);  
+                if(fuel > 0)
+                {
+                    moduleFuel += fuel;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            requiredFuel += moduleFuel;
         }
         fclose(file);
 
@@ -25,4 +41,10 @@ int main()
         printf("Failed to open %s",filepath);
     }
     return 0;
+}
+
+
+int FuelForMass(int mass)
+{
+    return (int)floor((float)mass / 3.0f) - 2;
 }
