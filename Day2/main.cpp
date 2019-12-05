@@ -3,175 +3,723 @@
 #include <set>
 
 using namespace std;
+struct op;
+typedef op* p_op;
 
 int RunIntCode(int* intCode);
 
+p_op Add(p_op* code, p_op a, p_op b);
+p_op AddSymbolToVal(p_op* code, p_op symbol, p_op val);
+p_op AddValToOp(p_op* code, p_op val, p_op oper);
+p_op AddValToVal(p_op* code, p_op a, p_op b);
+p_op AddSymbolToSymbol(p_op* code, p_op a, p_op b);
+p_op AddSymbolToOp(p_op* code, p_op symbol, p_op oper);
+p_op AddOpToOp(p_op* code, p_op a, p_op b);
+
+p_op Multiply(p_op* code, p_op a, p_op b);
+p_op MulSymbolToVal(p_op* code, p_op symbol, p_op val);
+p_op MulValToOp(p_op* code, p_op val, p_op oper);
+p_op MulValToVal(p_op* code, p_op a, p_op b);
+p_op MulSymbolToSymbol(p_op* code, p_op a, p_op b);
+p_op MulSymbolToOp(p_op* code, p_op symbol, p_op oper);
+p_op MulOpToOp(p_op* code, p_op a, p_op b);
+
+bool HasChildren(p_op code);
+
+struct op
+{
+    int value;
+    int operation;
+    bool hasValue;
+    op* children[2];
+};
+
 int main()
 {
-    vector<int> intCode;
-   
     char filepath[] = "Day2/input.txt";
     FILE* file = fopen(filepath,"r");
+    
+    vector<int> memory;
+   
     int val;
-
     while(fscanf(file,"%d",&val) != EOF)
     {            
-        intCode.push_back(val);
+        memory.push_back(val);
         fscanf(file,",");
     }    
 
-    // Build new opcode program
-    set<int> potentialUnknowns;
-    potentialUnknowns.insert(1);
-    potentialUnknowns.insert(2);
+    p_op *code = new p_op[memory.size()];
+    
+    for(int i = 0; i < memory.size(); ++i)
+    {
+        code[i] = new op();
+        code[i]->hasValue = true;
+        code[i]->value = memory[i];
+    }
+
+    code[1] = new op();
+    code[1]->hasValue = false;
+    code[1]->value = 0;
+
+    code[2] = new op();
+    code[2]->hasValue = false;
+    code[2]->value = 0;
+
+    // Build new opcode graph
     // Collect old ops
     int i = 0;
-    while(intCode[i] != 99)
+    while(code[i]->value != 99)
     {
-        potentialUnknowns.insert(intCode[i+3]);
+        switch (code[i]->value)
+        {
+        case 1:
+            code[code[i+3]->value] = Add(code,code[i+1],code[i+2]);
+            if(!code[i+3]->hasValue)
+                printf("%d has no value\n",i+3);
+            break;
+        case 2:
+            code[code[i+3]->value] = Multiply(code, code[i+1],code[i+2]);
+            if(!code[i+3]->hasValue)
+                printf("%d has no value\n",i+3);
+            break;
+        }
         i+=4;
     }
 
-    vector<int> unknownOps;
-    potentialUnknowns.erase(0);
-    vector<int> newOps;
-    for(int n = i-4; n >= 0; n-=4)
-    {
-        // Get the reverse op + -> - * -> /
-        newOps.push_back(intCode[n] + 2); // Convert + to - and * to /
-        if(intCode[n] == 1)
-        {
-            printf("%d + %d -> %d\t",intCode[n+1],intCode[n+2],intCode[n+3]);
-        }
-        else if(intCode[n] == 2)
-        {
-            printf("%d * %d -> %d\t",intCode[n+1],intCode[n+2],intCode[n+3]);    
-        }
+    // p_op finalOp = code[i-2];
     
-        int unknowns = 0;
-        bool firstKnown = potentialUnknowns.find(intCode[n+1]) == potentialUnknowns.end();
-        bool secondKnown = potentialUnknowns.find(intCode[n+2]) == potentialUnknowns.end();
-        bool resultKnown = potentialUnknowns.find(intCode[n+3]) == potentialUnknowns.end();
-        
-        if(firstKnown && !secondKnown && resultKnown)
-        {
-            newOps.push_back(intCode[n+3]);
-            newOps.push_back(intCode[n+1]);
-            newOps.push_back(intCode[n+2]);
-            potentialUnknowns.erase(intCode[n+3]);
-            if(intCode[n] + 2 ==3)
-            {
-                printf("%d - %d -> %d\n",intCode[n+3],intCode[n+1],intCode[n+2]);
-            }
-            else if(intCode[n] + 2 == 4)
-            {
-                printf("%d / %d -> %d\n",intCode[n+3],intCode[n+1],intCode[n+2]);    
-            }
-            // printf("Erase %d\n",intCode[n+2]);
-        }
-        else if(!firstKnown && secondKnown && resultKnown)
-        {
-            newOps.push_back(intCode[n+3]);
-            newOps.push_back(intCode[n+2]);
-            newOps.push_back(intCode[n+1]);
-            potentialUnknowns.erase(intCode[n+3]);
-            if(intCode[n] + 2 == 3)
-            {
-                printf("%d - %d -> %d\n",intCode[n+3],intCode[n+2],intCode[n+1]);
-            }
-            else if(intCode[n] + 2 == 4)
-            {
-                printf("%d / %d -> %d\n",intCode[n+3],intCode[n+2],intCode[n+1]);    
-            }
-            // printf("Erase %d\n",intCode[n+1]);
-        }
-        else if( (!firstKnown && !secondKnown))
-        {
-            printf("\n");
-            printf("Two Unknowns %d %d\n",intCode[n+1],intCode[n+2]);
-            newOps.pop_back();
-            // unknownOps.push_back(intCode[n]);
-            // unknownOps.push_back(intCode[n+1]);
-            // unknownOps.push_back(intCode[n+2]);
-            // unknownOps.push_back(intCode[n+3]);
-        }
-        else if( (!firstKnown && !resultKnown) )
-        {
-            printf("\n");
-            printf("Two Unknowns %d %d\n",intCode[n+1],intCode[n+3]);
-            newOps.pop_back();
-            // unknownOps.push_back(intCode[n]);
-            // unknownOps.push_back(intCode[n+1]);
-            // unknownOps.push_back(intCode[n+2]);
-            // unknownOps.push_back(intCode[n+3]);
-        }
-        else if(  (!secondKnown && !resultKnown))
-        {
-            printf("\n");
-            printf("Two Unknowns %d %d\n",intCode[n+2],intCode[n+3]);
-            newOps.pop_back();
-            // unknownOps.push_back(intCode[n]);
-            // unknownOps.push_back(intCode[n+1]);
-            // unknownOps.push_back(intCode[n+2]);
-            // unknownOps.push_back(intCode[n+3]);
-        }
-        else
-        {
-            potentialUnknowns.erase(intCode[n+3]);
-            printf("\n");
-            printf("Help\n");
-        }
-    }
+    // if(HasChildren(finalOp))
+    // {
+    //     printf("FinalOp has children\n");
+    // }
+    // else
+    // {
+    //     printf("FinalOp does not have children\n");
+    // }
 
-    for(set<int>::iterator it = potentialUnknowns.begin(); it != potentialUnknowns.end(); ++it)
-    {
-        printf("%d ",*it);
-    }printf("\n");
+    // if(finalOp->hasValue)
+    // {
+    //     printf("Final op has a value of %d\n",finalOp->value);
+    // }
+    // else
+    // {
+    //     printf("Final op does not have a value\n");
+    // }
 
-    for(int n = 0; n < newOps.size(); n++)
+    for(int n = 0; n < memory.size();++n)
     {
-        printf("%d ", newOps[n]);
-    }
-    printf("\n");
-
-    switch(newOps[0])
-    {
-        case 3:
+        if(!code[n]->hasValue)
+        {
+            printf("%d has no value\n",n);
+        }
             
-            intCode[newOps[3]] = 19690720 - intCode[newOps[2]];
-            printf("%d - %d -> %d\t%d - %d = %d\n",newOps[1],newOps[2],newOps[3],19690720,intCode[newOps[2]],intCode[newOps[3]]);
-            break;
-        case 4:
-            intCode[newOps[3]] = 19690720 / intCode[newOps[2]];
-            printf("%d / %d -> %d\t%d / %d = %d\n",newOps[1],newOps[2],newOps[3],19690720,intCode[newOps[2]],intCode[newOps[3]]);
-            break;
     }
-    for(int n = 4; n < newOps.size(); n+=4)
-    {
-        switch(newOps[n])
-        {
-            case 3:
-                intCode[newOps[n+3]] = intCode[newOps[n+1]] - intCode[newOps[n+2]];
-                printf("%d - %d -> %d\t%d - %d = %d\n",newOps[n+1],newOps[n+2],newOps[n+3],intCode[newOps[n+1]],intCode[newOps[n+2]],intCode[newOps[n+3]]);
-                break;
-            case 4:
-                intCode[newOps[n+3]] = intCode[newOps[n+1]] / intCode[newOps[n+2]];
-                printf("%d / %d -> %d\t%d / %d = %d\n",newOps[n+1],newOps[n+2],newOps[n+3],intCode[newOps[n+1]],intCode[newOps[n+2]],intCode[newOps[n+3]]);
-                break;
-        }
-    }
+    
 
-    for(int n = 0; n < unknownOps.size(); n++)
-    {
-        printf("%d ", unknownOps[n]);
-    }
-    printf("\n");
-    
-    printf("%d %d",intCode[1],intCode[2]);
-    
+    printf("%d\n",code[0]->value);
+    // delete [] code;
     // int output = RunIntCode(intCode.data());
     // printf("%d\n",output);
     return 0;
+}
+
+#pragma region Addition
+p_op Add(p_op* code, p_op a, p_op b)
+{
+    if(a->hasValue && b->hasValue) 
+    {
+        return AddValToVal(code,a,b);
+    }
+    else if(a->hasValue && !b->hasValue)
+    {
+        if(HasChildren(b))
+        {
+            return AddValToOp(code,a,b);
+        }
+        else
+        {
+            return AddSymbolToVal(code,b,a);
+        }
+    }
+    else if(!a->hasValue && b->hasValue)
+    {
+        if(HasChildren(a))
+        {
+            return AddValToOp(code,b,a);
+        }
+        else
+        {
+            return AddSymbolToVal(code,a,b);
+        }
+    }
+    else // Neither A or b have vals could be symbols could be operations of symbols
+    {
+        bool aOp = HasChildren(a);
+        bool bOp = HasChildren(b);
+        
+        if(aOp && bOp) // a is op b is op
+        {
+            return AddOpToOp(code,a,b);
+        }
+        else if(!aOp && bOp) // a is symbol b is op
+        {
+            return AddSymbolToOp(code,a,b);
+        }
+        else if(aOp && !bOp) // a is op b is symbol
+        {
+            return AddSymbolToOp(code,b,a);
+        }
+        else // a is symbol b is symbol
+        {
+            return AddSymbolToSymbol(code,a,b);
+        }
+    }
+}
+
+p_op AddSymbolToVal(p_op* code, p_op symbol, p_op val)
+{
+    p_op out = new op();
+    out->children[0] = symbol;
+    out->children[1] = val;
+    out->operation = 1;
+    out->hasValue = false;
+    return out;
+}
+
+p_op AddValToOp(p_op* code, p_op val, p_op oper)
+{
+    p_op out = new op();
+    
+    if(oper->operation == 1) // Addition
+    {
+        if(oper->children[0]->hasValue) 
+        {
+            out->children[0] = Add(code,val,oper->children[0]); // Add the value child
+            out->children[1] = oper->children[1];
+            out->operation = 1;
+            out->hasValue = false;
+            return out;
+        }
+        else if(oper->children[1]->hasValue)
+        {
+            out->children[0] = Add(code,val,oper->children[1]); // Add the value child
+            out->children[1] = oper->children[1];
+            out->operation = 1;
+            out->hasValue = false;
+            return out;
+        }
+        else
+        {
+            out->children[0] = oper;
+            out->children[1] = val;
+            out->operation = 1;
+            out->hasValue = false;
+            return out;
+        }
+    }
+    else if(oper->operation == 2)
+    {
+        out->children[0] = oper;
+        out->children[1] = val;
+        out->operation = 1;
+        out->hasValue = false;
+        return out;
+    }
+    
+    return NULL;
+}
+
+p_op AddValToVal(p_op* code, p_op a, p_op b)
+{
+    p_op out = new op();
+    out->hasValue = true;
+    out->value = code[a->value]->value + code[b->value]->value;
+    return out;
+}
+
+p_op AddSymbolToSymbol(p_op* code, p_op a, p_op b)
+{
+    p_op out = new op();
+    out->children[0] = a;
+    out->children[1] = b;
+    out->operation = 1;
+    out->hasValue = false;
+    return out;
+}
+
+p_op AddSymbolToOp(p_op* code, p_op symbol, p_op oper)
+{
+    if(oper->operation == 1) // Addition
+    {
+        if(oper->children[0] == symbol)
+        {
+            p_op out = new op();
+            p_op child = new op();
+            p_op valChild = new op();
+
+            valChild->value = 2;
+            valChild->hasValue = true;
+
+            child->children[0] = symbol;
+            child->children[1] = valChild;
+            child->hasValue = false;
+            child->operation = 2;
+
+            out->children[0] = oper->children[1];
+            out->children[1] = child;
+            out->hasValue = false;
+            out->operation = 2;
+
+            return out;
+        }
+        else if(oper->children[1] == symbol)
+        {
+            p_op out = new op();
+            p_op child = new op();
+            p_op valChild = new op();
+
+            valChild->value = 2;
+            valChild->hasValue = true;
+
+            child->children[0] = symbol;
+            child->children[1] = valChild;
+            child->hasValue = false;
+            child->operation = 2;
+
+            out->children[0] = oper->children[0];
+            out->children[1] = child;
+            out->hasValue = false;
+            out->operation = 2;
+
+            return out;
+        }
+        else
+        {
+            p_op out = new op();
+            out->children[0] = symbol;
+            out->children[1] = oper;
+            out->hasValue = false;
+            out->operation = 1;
+            return out;
+        }
+    }
+    else // Multiplication
+    {
+        if(oper->children[0] == symbol)
+        {
+            if(oper->children[1]->hasValue)
+            {
+                oper->children[1]->value += 1;
+            }
+            else
+            {
+                p_op child = new op();
+                p_op valChild = new op();
+                valChild->value = 1;
+                valChild->hasValue = true;
+
+                child->children[0] = oper->children[1];
+                child->children[1] = valChild; //TODO verify this is fine, might be a misstep to say its 1
+                child->operation = 1;
+                child->hasValue = false;
+
+                oper->children[1] = child;
+            }
+            return oper;    
+        }
+        else if(oper->children[1] == symbol)
+        {
+            if(oper->children[0]->hasValue)
+            {
+                oper->children[0]->value += 1;
+            }
+            else
+            {
+                p_op child = new op();
+                p_op valChild = new op();
+                valChild->value = 1;
+                valChild->hasValue = true;
+
+                child->children[0] = oper->children[0];
+                child->children[1] = valChild; //TODO verify this is fine, might be a misstep to say its 1
+                child->operation = 1;
+                child->hasValue = false;
+
+                oper->children[0] = child;
+            }
+            return oper;    
+        }
+        else // Neither 
+        {
+            p_op out = new op();
+            out->hasValue = false;
+            out->operation = 1;
+            out->children[0] = oper;
+            out->children[1] = symbol;
+            return out;
+        }
+    }
+    return NULL;
+}
+
+p_op AddOpToOp(p_op* code, p_op a, p_op b)
+{
+    if(a->operation == 1 && b->operation == 1) // a is add b is add
+    {
+        // We can add any vals, add any common symbols, create operation for rest
+        p_op out = new op();
+        if(a->children[0]->hasValue)
+        {
+            out = AddValToOp(code,a->children[0],b);
+        }
+        else
+        {
+            out = AddSymbolToOp(code,a->children[0],b);
+        }
+
+        if(a->children[1]->hasValue)
+        {
+            out = AddValToOp(code,a->children[1],out);
+        }
+        else
+        {
+            out = AddSymbolToOp(code,a->children[1],out);
+        }
+        return out;
+    }
+    else if(a->operation == 1 && b->operation == 2) // a is add b is mult
+    {
+        p_op out = new op();
+        if(a->children[0]->hasValue)
+        {
+            out = AddValToOp(code,a->children[0],b);
+        }
+        else
+        {
+            out = AddSymbolToOp(code,a->children[0],b);
+        }
+
+        if(a->children[1]->hasValue)
+        {
+            out = AddValToOp(code,a->children[1],out);
+        }
+        else
+        {
+            out = AddSymbolToOp(code,a->children[1],out);
+        }
+        return out;
+    }
+    else if(a->operation == 2 && b->operation == 1) // a is mult b is add
+    {
+        p_op out = new op();
+        if(b->children[0]->hasValue)
+        {
+            out = AddValToOp(code,b->children[0],a);
+        }
+        else
+        {
+            out = AddSymbolToOp(code,b->children[0],a);
+        }
+
+        if(b->children[1]->hasValue)
+        {
+            out = AddValToOp(code,b->children[1],out);
+        }
+        else
+        {
+            out = AddSymbolToOp(code,b->children[1],out);
+        }
+        return out;
+    }
+    else if(a->operation == 2 && b->operation == 2) // a is mult b is mult
+    {
+        p_op out = new op();
+        out->hasValue = false;
+        out->operation = 1;
+        out->children[0] = a;
+        out->children[0] = b;
+        return out;
+    }
+}
+#pragma endregion
+
+#pragma region Multiplication
+p_op Multiply(p_op* code, p_op a, p_op b)
+{
+    if(a->hasValue && b->hasValue) 
+    {
+        return MulValToVal(code,a,b);
+    }
+    else if(a->hasValue && !b->hasValue)
+    {
+        if(HasChildren(b))
+        {
+            return MulValToOp(code,a,b);
+        }
+        else
+        {
+            return MulSymbolToVal(code,b,a);
+        }
+    }
+    else if(!a->hasValue && b->hasValue)
+    {
+        if(HasChildren(a))
+        {
+            return MulValToOp(code,b,a);
+        }
+        else
+        {
+            return MulSymbolToVal(code,a,b);
+        }
+    }
+    else // Neither A or b have vals could be symbols could be operations of symbols
+    {
+        bool aOp = HasChildren(a);
+        bool bOp = HasChildren(b);
+        
+        if(aOp && bOp) // a is op b is op
+        {
+            return MulOpToOp(code,a,b);
+        }
+        else if(!aOp && bOp) // a is symbol b is op
+        {
+            return MulSymbolToOp(code,a,b);
+        }
+        else if(aOp && !bOp) // a is op b is symbol
+        {
+            return MulSymbolToOp(code,b,a);
+        }
+        else // a is symbol b is symbol
+        {
+            return MulSymbolToSymbol(code,a,b);
+        }
+    }
+}
+
+p_op MulSymbolToVal(p_op* code, p_op symbol, p_op val)
+{
+    p_op out = new op();
+    out->hasValue = false;
+    out->operation = 2;
+    out->children[0] = symbol;
+    out->children[1] = val;
+    return out;
+}
+
+p_op MulValToOp(p_op* code, p_op val, p_op oper)
+{
+    if(HasChildren(oper->children[0]))
+    {
+        oper->children[0] = MulValToOp(code, val,oper->children[0]);
+    }
+    else
+    {
+        oper->children[0] = MulSymbolToVal(code, oper->children[0],val);
+    }
+
+    if(HasChildren(oper->children[1]))
+    {
+        oper->children[1] = MulValToOp(code, val,oper->children[1]);
+    }
+    else
+    {
+        oper->children[1] = MulSymbolToVal(code, oper->children[1],val);
+    }
+    return oper;
+}
+
+p_op MulValToVal(p_op* code, p_op a, p_op b)
+{
+    p_op out = new op();
+    out->hasValue = true;
+    out->value = code[a->value]->value * code[b->value]->value;
+    return out;
+}
+
+p_op MulSymbolToSymbol(p_op* code, p_op a, p_op b)
+{// Ignoring Quadratic case as that adds complexity currently not needed
+    p_op out = new op();
+    out->hasValue = false;
+    out->operation = 2;
+    out->children[0] = a;
+    out->children[0] = b;
+    return out;
+}
+
+p_op MulSymbolToOp(p_op* code, p_op symbol, p_op oper)
+{
+    if(HasChildren(oper->children[0]))
+    {
+        oper->children[0] = MulSymbolToOp(code,symbol,oper->children[0]);
+    }
+    else
+    {
+        oper->children[0] = MulSymbolToSymbol(code,oper->children[0],symbol);
+    }
+
+    if(HasChildren(oper->children[1]))
+    {
+        oper->children[1] = MulSymbolToOp(code,symbol,oper->children[1]);
+    }
+    else
+    {
+        oper->children[1] = MulSymbolToSymbol(code,oper->children[1],symbol);
+    }
+    return oper;
+}
+
+p_op MulOpToOp(p_op* code, p_op a, p_op b)
+{
+    if(a->operation == 1 && b->operation == 1) // a is add b is add
+    {
+        // a[0]b[0] + a[0]b[1] + a[1]b[0] + a[1]b[1]
+        p_op outA;
+        p_op outB;
+        p_op outC;
+        p_op outD;
+        
+        // Is a[0] symbol, operation or val
+        if(a->children[0]->hasValue) // a[0] is val
+        {
+            outA = MulValToOp(code, a->children[0],b->children[0]);
+            outB = MulValToOp(code, a->children[0],b->children[1]);
+        }
+        else if(HasChildren(a->children[0])) // a[0] is operation
+        {
+            outA = MulOpToOp(code, a->children[0],b->children[0]);
+            outB = MulValToOp(code, a->children[0],b->children[1]);
+        }
+        else // a[0] is symbol
+        {
+            outA = MulSymbolToOp(code, a->children[0],b->children[0]);
+            outB = MulValToOp(code, a->children[0],b->children[1]);
+        }
+
+        if(a->children[1]->hasValue) // a[1] is val
+        {
+            outC = MulValToOp(code, a->children[1],b->children[0]);
+            outD = MulValToOp(code, a->children[1],b->children[1]);
+        }
+        else if(HasChildren(a->children[1])) // a[1] is operation
+        {
+            outC = MulOpToOp(code, a->children[1],b->children[0]);
+            outD = MulValToOp(code, a->children[1],b->children[1]);
+        }
+        else // a[1] is symbol
+        {
+            outC = MulSymbolToOp(code, a->children[1],b->children[0]);
+            outD = MulValToOp(code, a->children[1],b->children[1]);
+        }
+        
+        return AddOpToOp(code, AddOpToOp(code, outA,outB),AddOpToOp(code, outC,outD));
+    }
+    else if(a->operation == 1 && b->operation == 2) // a is add b is mult
+    {
+        // a[0]b + a[1]b 
+        p_op outA;
+        p_op outB;
+        
+        // Is a[0] symbol, operation or val
+        if(a->children[0]->hasValue) // a[0] is val
+        {
+            outA = MulValToOp(code, a->children[0],b);
+        }
+        else if(HasChildren(a->children[0])) // a[0] is operation
+        {
+            outA = MulOpToOp(code, a->children[0],b);
+        }
+        else // a[0] is symbol
+        {
+            outA = MulSymbolToOp(code, a->children[0],b);
+        }
+
+        if(a->children[1]->hasValue) // a[1] is val
+        {
+            outB = MulValToOp(code, a->children[1],b);
+        }
+        else if(HasChildren(a->children[1])) // a[1] is operation
+        {
+            outB = MulOpToOp(code, a->children[1],b);
+        }
+        else // a[1] is symbol
+        {
+            outB = MulSymbolToOp(code, a->children[1],b);
+        }
+        
+        return AddOpToOp(code, outA,outB);
+    }
+    else if(a->operation == 2 && b->operation == 1) // a is mult b is add
+    {
+        // b[0]a + b[1]a 
+        p_op outA;
+        p_op outB;
+        
+        // Is b[0] symbol, operation or val
+        if(b->children[0]->hasValue) // b[0] is val
+        {
+            outA = MulValToOp(code, b->children[0],a);
+        }
+        else if(HasChildren(b->children[0])) // b[0] is operation
+        {
+            outA = MulOpToOp(code, b->children[0],a);
+        }
+        else // b[0] is symbol
+        {
+            outA = MulSymbolToOp(code, b->children[0],a);
+        }
+
+        if(b->children[1]->hasValue) // b[1] is val
+        {
+            outB = MulValToOp(code, b->children[1],a);
+        }
+        else if(HasChildren(b->children[1])) // b[1] is operation
+        {
+            outB = MulOpToOp(code, b->children[1],a);
+        }
+        else // b[1] is symbol
+        {
+            outB = MulSymbolToOp(code, b->children[1],a);
+        }
+        
+        return AddOpToOp(code, outA,outB);
+    }
+    else if(a->operation == 2 && b->operation == 2) // a is mult b is mult
+    {
+        // (a[0] * b )*a[1]*b
+        if(a->children[0]->hasValue) // a[0] is val
+        {
+            b = MulValToOp(code, a->children[0],b);
+        }
+        else if(HasChildren(a->children[0])) // a[0] is operation
+        {
+            b = MulOpToOp(code, a->children[0],b);
+        }
+        else // a[0] is symbol
+        {
+            b = MulSymbolToOp(code, a->children[0],b);
+        }
+
+        if(a->children[1]->hasValue) // a[1] is val
+        {
+            b = MulValToOp(code, a->children[1],b);
+        }
+        else if(HasChildren(a->children[1])) // a[1] is operation
+        {
+            b = MulOpToOp(code, a->children[1],b);
+        }
+        else // a[1] is symbol
+        {
+            b = MulSymbolToOp(code, a->children[1],b);
+        }
+        
+        return b;
+    }
+}
+#pragma endregion
+
+bool HasChildren(p_op node)
+{
+    return node->children[0] != NULL && node->children[1] != NULL;
 }
 
 int RunIntCode(int* intCode)
@@ -186,12 +734,6 @@ int RunIntCode(int* intCode)
             break;
         case 2:
             intCode[intCode[i+3]] = intCode[intCode[i + 1]] * intCode[intCode[i + 2]];
-            break;
-        case 3:
-            intCode[intCode[i+3]] = intCode[intCode[i + 1]] - intCode[intCode[i + 2]];
-            break;
-        case 4:
-            intCode[intCode[i+3]] = intCode[intCode[i + 1]] / intCode[intCode[i + 2]];
             break;
         }
         i+=4;
