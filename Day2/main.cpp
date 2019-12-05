@@ -26,12 +26,14 @@ p_op MulOpToOp(p_op* code, p_op a, p_op b);
 
 bool HasChildren(p_op code);
 
+void PrintEquation(p_op* code, p_op node);
+
 struct op
 {
-    int value;
+    int dest;
     int operation;
     bool hasValue;
-    op* children[2];
+    p_op children[2];
 };
 
 int main()
@@ -54,69 +56,64 @@ int main()
     {
         code[i] = new op();
         code[i]->hasValue = true;
-        code[i]->value = memory[i];
+        code[i]->dest = memory[i];
     }
 
     code[1] = new op();
     code[1]->hasValue = false;
-    code[1]->value = 0;
+    code[1]->dest = 0;
 
     code[2] = new op();
     code[2]->hasValue = false;
-    code[2]->value = 0;
+    code[2]->dest = 0;
 
     // Build new opcode graph
     // Collect old ops
     int i = 0;
-    while(code[i]->value != 99)
+    while(code[i]->dest != 99)
     {
-        switch (code[i]->value)
+        switch (code[i]->dest)
         {
         case 1:
-            code[code[i+3]->value] = Add(code,code[i+1],code[i+2]);
-            if(!code[i+3]->hasValue)
-                printf("%d has no value\n",i+3);
+            code[code[i+3]->dest] = Add(code,code[i+1],code[i+2]);
+            
             break;
         case 2:
-            code[code[i+3]->value] = Multiply(code, code[i+1],code[i+2]);
-            if(!code[i+3]->hasValue)
-                printf("%d has no value\n",i+3);
+            code[code[i+3]->dest] = Multiply(code, code[i+1],code[i+2]);
             break;
+        }
+        if(!code[code[i+3]->dest]->hasValue)
+        {
+            printf("%d = ",code[i+3]->dest);
+            PrintEquation(code,code[code[i+3]->dest]);
+            printf("\n");
         }
         i+=4;
     }
 
-    // p_op finalOp = code[i-2];
-    
-    // if(HasChildren(finalOp))
-    // {
-    //     printf("FinalOp has children\n");
-    // }
-    // else
-    // {
-    //     printf("FinalOp does not have children\n");
-    // }
-
-    // if(finalOp->hasValue)
-    // {
-    //     printf("Final op has a value of %d\n",finalOp->value);
-    // }
-    // else
-    // {
-    //     printf("Final op does not have a value\n");
-    // }
-
-    for(int n = 0; n < memory.size();++n)
+    if(code[0]->hasValue)
     {
-        if(!code[n]->hasValue)
-        {
-            printf("%d has no value\n",n);
-        }
-            
+        printf("0 has value\n");
     }
-    
+    else
+    {
+        printf("0 has no value\n");
+    }
+    if(HasChildren(code[0]))
+    {
+        printf("0 has children\n");
+    }
+    else
+    {
+        printf("0 has no children\n");
+    }
 
-    printf("%d\n",code[0]->value);
+    i = 19;
+    printf("%d = ",i);
+    PrintEquation(code,code[i]);
+    printf("\n");
+    
+    // printf("%d\n",code[0]->dest);
     // delete [] code;
     // int output = RunIntCode(intCode.data());
     // printf("%d\n",output);
@@ -210,6 +207,24 @@ p_op AddValToOp(p_op* code, p_op val, p_op oper)
         }
         else
         {
+            // TODO Be more specific with this func
+            if(HasChildren(oper->children[0]) && HasChildren(oper->children[1]))
+            {
+                if(oper->children[0]->operation == 1)
+                {
+                    return AddValToOp(code,val,oper->children[0]);
+                }
+                else if(oper->children[1]->operation == 1)
+                {
+                    return AddValToOp(code,val,oper->children[1]);
+                }
+                else if(oper->children[0]->operation == 2)
+                {
+
+                }
+                else if(oper->children[2]->operation == 2)
+            }
+            AddValToOp(val,oper)
             out->children[0] = oper;
             out->children[1] = val;
             out->operation = 1;
@@ -232,8 +247,44 @@ p_op AddValToOp(p_op* code, p_op val, p_op oper)
 p_op AddValToVal(p_op* code, p_op a, p_op b)
 {
     p_op out = new op();
-    out->hasValue = true;
-    out->value = code[a->value]->value + code[b->value]->value;
+    
+    if(code[a->dest]->hasValue && code[b->dest]->hasValue)
+    {
+        out->hasValue = true;
+        out->dest = code[a->dest]->dest + code[b->dest]->dest;
+    }
+    else
+    {
+        out = Add(code,code[a->dest],code[b->dest]);
+    }
+    
+    // else if(code[a->dest]->hasValue && !code[b->dest]->hasValue)
+    // {
+    //     if(HasChildren(code[b->dest]))
+    //     {
+    //         out = AddValToOp(code,code[a->dest],code[b->dest]);
+    //     }
+    //     else
+    //     {
+    //         out = AddSymbolToVal(code,code[b->dest],code[a->dest]);
+    //     }
+    // }
+    // else if(!code[a->dest]->hasValue && code[b->dest]->hasValue)
+    // {
+    //     if(HasChildren(code[a->dest]))
+    //     {
+    //         out = AddValToOp(code,code[b->dest],code[a->dest]);
+    //     }
+    //     else
+    //     {
+    //         out = AddSymbolToVal(code,code[a->dest],code[b->dest]);
+    //     }
+    // }
+    // else
+    // {
+        
+    // }
+
     return out;
 }
 
@@ -257,7 +308,7 @@ p_op AddSymbolToOp(p_op* code, p_op symbol, p_op oper)
             p_op child = new op();
             p_op valChild = new op();
 
-            valChild->value = 2;
+            valChild->dest = 2;
             valChild->hasValue = true;
 
             child->children[0] = symbol;
@@ -278,7 +329,7 @@ p_op AddSymbolToOp(p_op* code, p_op symbol, p_op oper)
             p_op child = new op();
             p_op valChild = new op();
 
-            valChild->value = 2;
+            valChild->dest = 2;
             valChild->hasValue = true;
 
             child->children[0] = symbol;
@@ -309,13 +360,13 @@ p_op AddSymbolToOp(p_op* code, p_op symbol, p_op oper)
         {
             if(oper->children[1]->hasValue)
             {
-                oper->children[1]->value += 1;
+                oper->children[1]->dest += 1;
             }
             else
             {
                 p_op child = new op();
                 p_op valChild = new op();
-                valChild->value = 1;
+                valChild->dest = 1;
                 valChild->hasValue = true;
 
                 child->children[0] = oper->children[1];
@@ -331,13 +382,13 @@ p_op AddSymbolToOp(p_op* code, p_op symbol, p_op oper)
         {
             if(oper->children[0]->hasValue)
             {
-                oper->children[0]->value += 1;
+                oper->children[0]->dest += 1;
             }
             else
             {
                 p_op child = new op();
                 p_op valChild = new op();
-                valChild->value = 1;
+                valChild->dest = 1;
                 valChild->hasValue = true;
 
                 child->children[0] = oper->children[0];
@@ -531,8 +582,16 @@ p_op MulValToOp(p_op* code, p_op val, p_op oper)
 p_op MulValToVal(p_op* code, p_op a, p_op b)
 {
     p_op out = new op();
-    out->hasValue = true;
-    out->value = code[a->value]->value * code[b->value]->value;
+    
+    if(code[a->dest]->hasValue && code[b->dest]->hasValue)
+    {
+        out->hasValue = true;
+        out->dest = code[a->dest]->dest * code[b->dest]->dest;
+    }
+    else
+    {
+        out = Multiply(code,code[a->dest],code[b->dest]);
+    }
     return out;
 }
 
@@ -720,6 +779,35 @@ p_op MulOpToOp(p_op* code, p_op a, p_op b)
 bool HasChildren(p_op node)
 {
     return node->children[0] != NULL && node->children[1] != NULL;
+}
+
+void PrintEquation(p_op* code, p_op node)
+{
+    if(node->hasValue)
+    {
+        printf(" %d ",node->dest);
+    }
+    else if(node == code[1])
+    {
+        printf(" XXX ");
+    }
+    else if(node == code[2])
+    {
+        printf(" YYY ");
+    }
+    else if(HasChildren(node))
+    {
+        printf("( ");
+        PrintEquation(code,node->children[0]);
+
+        if(node->operation == 1)
+            printf(" + ");
+        else
+            printf(" * ");
+
+        PrintEquation(code,node->children[1]);
+        printf(" )");
+    }
 }
 
 int RunIntCode(int* intCode)
