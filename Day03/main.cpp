@@ -9,7 +9,7 @@ using namespace std;
 
 int main()
 {
-    char filepath[] = "Day3/input.txt";
+    char filepath[] = "Day03/input.txt";
     FILE* file = fopen(filepath,"r");
     
     vector< array<int,2> > lines;

@@ -7,7 +7,7 @@ int RunIntCode(int* intCode);
 
 int main()
 {
-    char filepath[] = "Day02/input.txt";
+    char filepath[] = "Day05/input.txt";
     FILE* file = fopen(filepath,"r");
     
     vector<int> rawMemory;

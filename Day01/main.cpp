@@ -5,7 +5,7 @@ int FuelForMass(int mass);
 
 int main()
 {
-    char filepath[] = "Day1/input.txt";
+    char filepath[] = "Day01/input.txt";
     FILE* file;
     file = fopen(filepath,"r");
     
