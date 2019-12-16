@@ -3,6 +3,22 @@
 
 using namespace std;
 
+enum Op
+{
+    ADD = 1,
+    MUL = 2,
+
+
+
+    END = 99
+};
+
+enum Param
+{
+    POS = 0,
+    IM = 1
+};
+
 int RunIntCode(int* intCode);
 
 int main()
@@ -60,3 +76,5 @@ int RunIntCode(int* intCode)
     }
     return intCode[0];
 }
+
+int* Split
