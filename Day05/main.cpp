@@ -37,7 +37,7 @@ void Add(int* ram, int* modes, int instructionIndex);
 void Mul(int* ram, int* modes, int instructionIndex);
 void Input(int* ram, int* modes, int instructionIndex);
 void Output(int* ram, int* modes, int instructionIndex);
-void WriteRamToFile(int* ram, FILE* file);
+// void WriteRamToFile(int* ram, FILE* file);
 
 int main()
 {
@@ -64,13 +64,8 @@ int RunIntCode(int* ram)
     SplitInstruction(instructArray,ram[i]);
     int mode = 0;
 
-    FILE* out = fopen("Day05/debugOut.txt","a"); 
-    fprintf(out,"-1\t");
-    WriteRamToFile(ram,out);
-
     while(instructArray[3] != Op::END)
     {
-        fprintf(out,"%d\t",i);
         switch (instructArray[3])
         {
         case Op::ADD:
@@ -91,8 +86,6 @@ int RunIntCode(int* ram)
             break;
         }
         SplitInstruction(instructArray,ram[i]);
-        
-        WriteRamToFile(ram,out);
     }
     return ram[0];
 }
@@ -115,15 +108,16 @@ void SplitInstruction(int* array, const int instruction)
 
 void Add(int* ram, int* modes, int instructionIndex)
 {
-    int array[2] = {0};
+    int paramA;
+    int paramB;
     int i = 0;
     switch(modes[2])
     {
         case Param::POS:
-            array[i] = ram[ram[instructionIndex + i + 1]];
+            paramA = ram[ram[instructionIndex + i + 1]];
             break;
         case Param::IM:
-            array[i] = ram[instructionIndex + i + 1];
+            paramA = ram[instructionIndex + i + 1];
             break;
     }
 
@@ -131,36 +125,36 @@ void Add(int* ram, int* modes, int instructionIndex)
     switch(modes[1])
     {
         case Param::POS:
-            array[i] = ram[ram[instructionIndex + i + 1]];
+            paramB = ram[ram[instructionIndex + i + 1]];
             break;
         case Param::IM:
-            array[i] = ram[instructionIndex + i + 1];
+            paramB = ram[instructionIndex + i + 1];
             break;
     }
-    
     
     switch(modes[0])
     {
         case Param::POS:
-            ram[ram[instructionIndex + 3]] = array[0] + array[1];
+            ram[ram[instructionIndex + 3]] = paramA + paramB;
             break;
         case Param::IM:
-            ram[instructionIndex + 3] = array[0] + array[1];
+            ram[instructionIndex + 3] = paramA + paramB;
             break;
     }
 }
 
 void Mul(int* ram, int* modes, int instructionIndex)
 {
-    int array[2] = {0};
+    int paramA;
+    int paramB;
     int i = 0;
     switch(modes[2])
     {
         case Param::POS:
-            array[i] = ram[ram[instructionIndex + i + 1]];
+            paramA = ram[ram[instructionIndex + i + 1]];
             break;
         case Param::IM:
-            array[i] = ram[instructionIndex + i + 1];
+            paramA = ram[instructionIndex + i + 1];
             break;
     }
 
@@ -168,21 +162,20 @@ void Mul(int* ram, int* modes, int instructionIndex)
     switch(modes[1])
     {
         case Param::POS:
-            array[i] = ram[ram[instructionIndex + i + 1]];
+            paramB = ram[ram[instructionIndex + i + 1]];
             break;
         case Param::IM:
-            array[i] = ram[instructionIndex + i + 1];
+            paramB = ram[instructionIndex + i + 1];
             break;
     }
-    
     
     switch(modes[0])
     {
         case Param::POS:
-            ram[ram[instructionIndex + 3]] = array[0] * array[1];
+            ram[ram[instructionIndex + 3]] = paramA * paramB;
             break;
         case Param::IM:
-            ram[instructionIndex + 3] = array[0] * array[1];
+            ram[instructionIndex + 3] = paramA * paramB;
             break;
     }
 }
@@ -214,12 +207,12 @@ void Output(int* ram, int* modes, int instructionIndex)
     }
 }
 
-void WriteRamToFile(int* ram, FILE* file)
-{
-    int size = 625;
-    for(int i = 0; i < size; ++i)
-    {
-        fprintf(file,"%d: %d,\t",i,ram[i]);
-    }
-    fprintf(file,"\n");
-}
+// void WriteRamToFile(int* ram, FILE* file)
+// {
+//     int size = 625;
+//     for(int i = 0; i < size; ++i)
+//     {
+//         fprintf(file,"%d: %d,\t",i,ram[i]);
+//     }
+//     fprintf(file,"\n");
+// }
