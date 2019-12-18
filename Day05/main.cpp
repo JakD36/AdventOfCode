@@ -22,21 +22,40 @@ enum Op
     IN = 3,
     OUT = 4,
 
+    JUMP_IF_1 = 5,
+    JUMP_IF_0 = 6,
+
+    LESS_THAN = 7,
+    EQUALS = 8,
+
     END = 99
 };
 
-enum Param
+enum Mode
 {
     POS = 0,
     IM = 1
 };
 
+enum Param
+{
+    OUTPUT_MODE = 0,
+    INPUTB_MODE = 1,
+    INPUTA_MODE = 2,
+    INSTRUCTION = 3
+};
+
 int RunIntCode(int* intCode);
 void SplitInstruction(int* array, const int instruction);
-void Add(int* ram, int* modes, int instructionIndex);
-void Mul(int* ram, int* modes, int instructionIndex);
-void Input(int* ram, int* modes, int instructionIndex);
-void Output(int* ram, int* modes, int instructionIndex);
+int Add(int* ram, int* modes, int instructionIndex);
+int Mul(int* ram, int* modes, int instructionIndex);
+int Input(int* ram, int* modes, int instructionIndex);
+int Output(int* ram, int* modes, int instructionIndex);
+int JumpIf1(int* ram, int* modes, int instructionIndex);
+int JumpIf0(int* ram, int* modes, int instructionIndex);
+int LessThan(int* ram, int* modes, int instructionIndex);
+int Equals(int* ram, int* modes, int instructionIndex);
+
 // void WriteRamToFile(int* ram, FILE* file);
 
 int main()
@@ -69,23 +88,32 @@ int RunIntCode(int* ram)
         switch (instructArray[3])
         {
         case Op::ADD:
-            Add(ram,instructArray,i);
-            i+=4;
+            i = Add(ram,instructArray,i);
             break;
         case Op::MUL:
-            Mul(ram,instructArray,i);
-            i+=4;
+            i = Mul(ram,instructArray,i);
             break;
         case Op::IN:
-            Input(ram,instructArray,i);
-            i+=2;
+            i = Input(ram,instructArray,i);
             break;
         case Op::OUT:
-            Output(ram,instructArray,i);
-            i+=2;
+            i = Output(ram,instructArray,i);
+            break;
+        case Op::JUMP_IF_1:
+            i = JumpIf1(ram,instructArray,i);
+            break;
+        case Op::JUMP_IF_0:
+            i = JumpIf0(ram,instructArray,i);
+            break;
+        case Op::LESS_THAN:
+            i = LessThan(ram,instructArray,i);
+            break;
+        case Op::EQUALS:
+            i = Equals(ram,instructArray,i);
             break;
         }
         SplitInstruction(instructArray,ram[i]);
+        // printf("i = %d\n",i);
     }
     return ram[0];
 }
@@ -106,105 +134,268 @@ void SplitInstruction(int* array, const int instruction)
     array[3] = tmpArray[3] * 10 + tmpArray[4];
 }
 
-void Add(int* ram, int* modes, int instructionIndex)
+int Add(int* ram, int* instructArray, int instructionIndex)
 {
     int paramA;
     int paramB;
     int i = 0;
-    switch(modes[2])
+    switch(instructArray[INPUTA_MODE])
     {
-        case Param::POS:
-            paramA = ram[ram[instructionIndex + i + 1]];
+        case POS:
+            paramA = ram[ram[instructionIndex + 1]];
             break;
-        case Param::IM:
-            paramA = ram[instructionIndex + i + 1];
+        case IM:
+            paramA = ram[instructionIndex + 1];
             break;
     }
 
     i = 1;
-    switch(modes[1])
+    switch(instructArray[INPUTB_MODE])
     {
-        case Param::POS:
-            paramB = ram[ram[instructionIndex + i + 1]];
+        case POS:
+            paramB = ram[ram[instructionIndex + 2]];
             break;
-        case Param::IM:
-            paramB = ram[instructionIndex + i + 1];
+        case IM:
+            paramB = ram[instructionIndex + 2];
             break;
     }
     
-    switch(modes[0])
+    switch(instructArray[OUTPUT_MODE])
     {
-        case Param::POS:
+        case POS:
             ram[ram[instructionIndex + 3]] = paramA + paramB;
             break;
-        case Param::IM:
+        case IM:
             ram[instructionIndex + 3] = paramA + paramB;
             break;
     }
+
+    return instructionIndex + 4;
 }
 
-void Mul(int* ram, int* modes, int instructionIndex)
+int Mul(int* ram, int* instructArray, int instructionIndex)
 {
     int paramA;
     int paramB;
     int i = 0;
-    switch(modes[2])
+    switch(instructArray[INPUTA_MODE])
     {
-        case Param::POS:
-            paramA = ram[ram[instructionIndex + i + 1]];
+        case POS:
+            paramA = ram[ram[instructionIndex + 1]];
             break;
-        case Param::IM:
-            paramA = ram[instructionIndex + i + 1];
+        case IM:
+            paramA = ram[instructionIndex + 1];
             break;
     }
 
     i = 1;
-    switch(modes[1])
+    switch(instructArray[INPUTB_MODE])
     {
-        case Param::POS:
-            paramB = ram[ram[instructionIndex + i + 1]];
+        case POS:
+            paramB = ram[ram[instructionIndex + 2]];
             break;
-        case Param::IM:
-            paramB = ram[instructionIndex + i + 1];
+        case IM:
+            paramB = ram[instructionIndex + 2];
             break;
     }
     
-    switch(modes[0])
+    switch(instructArray[OUTPUT_MODE])
     {
-        case Param::POS:
+        case POS:
             ram[ram[instructionIndex + 3]] = paramA * paramB;
             break;
-        case Param::IM:
+        case IM:
             ram[instructionIndex + 3] = paramA * paramB;
             break;
     }
+    return instructionIndex + 4;
 }
 
-void Input(int* ram, int* modes, int instructionIndex)
+int Input(int* ram, int* instructArray, int instructionIndex)
 {
     printf("<< ");
-    switch(modes[2])
+    switch(instructArray[INPUTA_MODE])
     {
-        case Param::POS:
+        case POS:
             scanf("%d",&ram[ram[instructionIndex+1]]);
             break;
-        case Param::IM:
+        case IM:
             scanf("%d",&ram[instructionIndex+1]); 
             break;
     }
+    return instructionIndex + 2;
 }
 
-void Output(int* ram, int* modes, int instructionIndex)
+int Output(int* ram, int* instructArray, int instructionIndex)
 {
-    switch(modes[2])
+    switch(instructArray[INPUTA_MODE])
     {
-        case Param::POS:
+        case POS:
             printf("%d : %d >> %d\n",instructionIndex+1,ram[instructionIndex+1],ram[ram[instructionIndex+1]]);
             break;
-        case Param::IM:
+        case IM:
             printf("%d : %d >> %d\n",instructionIndex+1,instructionIndex+1,ram[instructionIndex+1]);
             break;
     }
+    return instructionIndex + 2;
+}
+
+int JumpIf1(int* ram, int* instructArray, int instructionIndex)
+{
+    int condition;
+    switch(instructArray[INPUTA_MODE])
+    {
+        case POS:
+            condition = ram[ram[instructionIndex + 1]];
+            break;
+        case IM:
+            condition = ram[instructionIndex + 1];
+            break;
+        default:
+            printf("Error: Unexpected Instruction param mode");
+            break;
+    }
+
+    int output;
+    switch(instructArray[INPUTB_MODE])
+    {
+        case POS:
+            output = ram[ram[instructionIndex + 2]];
+            break;
+        case IM:
+            output = ram[instructionIndex + 2];
+            break;
+        default:
+            printf("Error: Unexpected Instruction param mode");
+            break;
+    }
+    
+    if(condition)
+    {
+        return output;
+    }
+
+    return instructionIndex + 3;
+}
+
+int JumpIf0(int* ram, int* instructArray, int instructionIndex)
+{
+    int condition;
+    switch(instructArray[INPUTA_MODE])
+    {
+        case POS:
+            condition = ram[ram[instructionIndex + 1]];
+            break;
+        case IM:
+            condition = ram[instructionIndex + 1];
+            break;
+        default:
+            printf("Error: Unexpected Instruction param mode");
+            break;
+    }
+
+    int output;
+    switch(instructArray[INPUTB_MODE])
+    {
+        case POS:
+            output = ram[ram[instructionIndex + 2]];
+            break;
+        case IM:
+            output = ram[instructionIndex + 2];
+            break;
+        default:
+            printf("Error: Unexpected Instruction param mode");
+            break;
+    }
+    
+    if(!condition)
+    {
+        return output;
+    }
+
+    return instructionIndex + 3;
+}
+
+int LessThan(int* ram, int* instructArray, int instructionIndex)
+{
+    int paramA;
+    int paramB;
+    int i = 0;
+    switch(instructArray[INPUTA_MODE])
+    {
+        case POS:
+            paramA = ram[ram[instructionIndex + 1]];
+            break;
+        case IM:
+            paramA = ram[instructionIndex + 1];
+            break;
+    }
+
+    i = 1;
+    switch(instructArray[INPUTB_MODE])
+    {
+        case POS:
+            paramB = ram[ram[instructionIndex + 2]];
+            break;
+        case IM:
+            paramB = ram[instructionIndex + 2];
+            break;
+    }
+    
+    switch(instructArray[OUTPUT_MODE])
+    {
+        case POS:
+            ram[ram[instructionIndex + 3]] = paramA < paramB ? 1 : 0;
+            // if(ram[instructionIndex + 3] == instructionIndex)
+            //     return instructionIndex;
+            break;
+        case IM:
+            ram[instructionIndex + 3] = paramA < paramB ? 1 : 0;
+            break;
+    }
+
+    return instructionIndex + 4;
+}
+
+int Equals(int* ram, int* instructArray, int instructionIndex)
+{
+    int paramA;
+    int paramB;
+    int i = 0;
+    switch(instructArray[INPUTA_MODE])
+    {
+        case POS:
+            paramA = ram[ram[instructionIndex + 1]];
+            break;
+        case IM:
+            paramA = ram[instructionIndex + 1];
+            break;
+    }
+
+    i = 1;
+    switch(instructArray[INPUTB_MODE])
+    {
+        case Mode::POS:
+            paramB = ram[ram[instructionIndex + 2]];
+            break;
+        case Mode::IM:
+            paramB = ram[instructionIndex + 2];
+            break;
+    }
+    
+    switch(instructArray[OUTPUT_MODE])
+    {
+        case POS:
+            ram[ram[instructionIndex + 3]] = paramA == paramB ? 1 : 0;
+            // if(ram[instructionIndex+3] == instructionIndex)
+            //     return instructionIndex;
+            break;
+        case IM:
+            ram[instructionIndex + 3] = paramA == paramB ? 1 : 0;
+            break;
+    }
+
+    return instructionIndex + 4;
 }
 
 // void WriteRamToFile(int* ram, FILE* file)
