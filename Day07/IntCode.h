@@ -22,6 +22,7 @@ enum Op
     LESS_THAN = 7,
     EQUALS = 8,
 
+    TOTAL,
     END = 99
 };
 
@@ -39,7 +40,9 @@ enum Param
     INSTRUCTION = 3
 };
 
-int RunIntCode(int* intCode);
+typedef int (*operation)(int* ram, int* instructArray, int instructionIndex);
+
+int RunIntCode(FILE* input1, FILE* input2, FILE* output ,int* intCode);
 void SplitInstruction(int* array, const int instruction);
 int Add(int* ram, int* instructArray, int instructionIndex);
 int Mul(int* ram, int* instructArray, int instructionIndex);
@@ -50,41 +53,57 @@ int JumpIf0(int* ram, int* instructArray, int instructionIndex);
 int LessThan(int* ram, int* instructArray, int instructionIndex);
 int Equals(int* ram, int* instructArray, int instructionIndex);
 
-int RunIntCode(int* ram)
+int Input(FILE* file, int* ram, int* instructArray, int instructionIndex);
+int Output(FILE* file, int* ram, int* instructArray, int instructionIndex);
+
+int RunIntCode(FILE* input1, FILE* input2, FILE* output, int* ram)
 {
     int i = 0;
     int instructArray[4] = {0};
     SplitInstruction(instructArray,ram[i]);
     int mode = 0;
 
+    bool firstInput = true;
+
     while(instructArray[3] != END)
     {
-        switch (instructArray[3])
+        switch(instructArray[3])
         {
-        case ADD:
-            i = Add(ram,instructArray,i);
-            break;
-        case MUL:
-            i = Mul(ram,instructArray,i);
-            break;
-        case IN:
-            i = Input(ram,instructArray,i);
-            break;
-        case OUT:
-            i = Output(ram,instructArray,i);
-            break;
-        case JUMP_IF_1:
-            i = JumpIf1(ram,instructArray,i);
-            break;
-        case JUMP_IF_0:
-            i = JumpIf0(ram,instructArray,i);
-            break;
-        case LESS_THAN:
-            i = LessThan(ram,instructArray,i);
-            break;
-        case EQUALS:
-            i = Equals(ram,instructArray,i);
-            break;
+            case ADD:
+                i = Add(ram,instructArray,i);
+                break;
+            case MUL:
+                i = Mul(ram,instructArray,i);
+                break;
+            case IN:
+                if(firstInput)
+                {
+                    i = Input(input1,ram,instructArray,i);
+                    firstInput = false;
+                }
+                else
+                {
+                    i = Input(input2,ram,instructArray,i);
+                }
+                break;
+            case OUT:
+                i = Output(output,ram,instructArray,i);
+                break;
+            case JUMP_IF_1:
+                i = JumpIf1(ram,instructArray,i);
+                break;
+            case JUMP_IF_0:
+                i = JumpIf0(ram,instructArray,i);
+                break;
+            case LESS_THAN:
+                i = LessThan(ram,instructArray,i);
+                break;
+            case EQUALS:
+                i = Equals(ram,instructArray,i);
+                break;
+            default:
+                fprintf(stderr,"Error: Undefined Instruction %d\n",instructArray[3]);
+                break;
         }
         SplitInstruction(instructArray,ram[i]);
     }
@@ -366,4 +385,37 @@ int Equals(int* ram, int* instructArray, int instructionIndex)
 
     return instructionIndex + 4;
 }
+
+int Input(FILE* file, int* ram, int* instructArray, int instructionIndex)
+{
+    switch(instructArray[FIRST_MODE])
+    {
+        case POS:
+            fscanf(file,"%d",&ram[ram[instructionIndex+1]]);
+            printf("Read >> %d\n",ram[ram[instructionIndex+1]]);
+            break;
+        case IM:
+            fscanf(file,"%d",&ram[instructionIndex+1]); 
+            printf("Read >> %d\n",ram[instructionIndex+1]);
+            break;
+    }
+    return instructionIndex + 2;
+}
+
+int Output(FILE* file, int* ram, int* instructArray, int instructionIndex)
+{
+    switch(instructArray[FIRST_MODE])
+    {
+        case POS:
+            fprintf(file,"%d",ram[ram[instructionIndex+1]]);
+            printf("%d\n",ram[ram[instructionIndex+1]]);
+            break;
+        case IM:
+            fprintf(file,"%d",ram[instructionIndex+1]);
+            printf("%d\n",ram[ram[instructionIndex+1]]);
+            break;
+    }
+    return instructionIndex + 2;
+}
+
 #endif
