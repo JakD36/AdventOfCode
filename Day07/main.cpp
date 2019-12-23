@@ -72,9 +72,8 @@ int main()
             return 1; 
         }
     }
-
+    FILE* phase = fopen("Day07/phase.txt","r");
     pid_t p1 = fork();
-    pid_t p2 = fork();
     
     if(p1 > 0)
     {
@@ -87,10 +86,11 @@ int main()
         if(p2 == 0)
         {
             printf("Child 2\n");
-            FILE* input1 = stdin;
-            FILE* output = stdout;//fdopen(pipeFd[1][1],"w");
-            
+            FILE* input1 = phase;
+            FILE* output = stdout;
             RunIntCode(input1,input2,output,ram[1].data());
+            fclose(input2);
+            
             // close(pipeFd[1][1]);
         }
     }
@@ -98,10 +98,11 @@ int main()
     {
         printf("Child 1\n");
         FILE* input2 = stdin;
-        FILE* input1 = stdin;
+        FILE* input1 = phase;
         FILE* output = fdopen(pipeFd[0][1],"w");
         close(pipeFd[0][0]);
         RunIntCode(input1,input2,output,ram[0].data());
+        fclose(output);
         close(pipeFd[0][1]);
     }
     
