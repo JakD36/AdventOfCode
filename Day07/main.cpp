@@ -38,18 +38,48 @@ int main()
         }
     }
     
-    FILE* phase = fopen("Day07/phase.txt","r");
+    int max = 0;
     
-    FILE* init = fopen("Day07/init.txt","r");
-    FILE* IO[5 * 3] = 
+    FILE* phase = fopen("Day07/phase.txt","r");
+    for(int i = 0; i < 120;)
     {
-        phase, init, fdopen(pipeFd[0][1],"w"),
-        phase, fdopen(pipeFd[0][0],"r"), fdopen(pipeFd[1][1],"w"),
-        phase, fdopen(pipeFd[1][0],"r"), fdopen(pipeFd[2][1],"w"),
-        phase, fdopen(pipeFd[2][0],"r"), fdopen(pipeFd[3][1],"w"),
-        phase, fdopen(pipeFd[3][0],"r"), stdout,
-    };
-    ForkIntCode(IO,0,5,ram.data());
+        int output[2];
+        if (pipe(output) == -1) 
+        { 
+            fprintf(stderr, "Pipe Failed" ); 
+            return 1; 
+        }
+        pid_t p = fork();
+        
+        if(p > 0)
+        {
+            wait(NULL);
+            FILE* outFd = fdopen(output[0],"r");
+            int value;
+            fscanf(outFd,"%d",&value);
+            if(value > max)
+                max = value;
+            fclose(outFd);
+
+            if(i == 119)
+                printf("Max value = %d\n",max);
+            ++i;
+        }
+        else if(p == 0)
+        {         
+            FILE* init = fopen("Day07/init.txt","r");
+            FILE* IO[5 * 3] = 
+            {
+                phase, init, fdopen(pipeFd[0][1],"w"),
+                phase, fdopen(pipeFd[0][0],"r"), fdopen(pipeFd[1][1],"w"),
+                phase, fdopen(pipeFd[1][0],"r"), fdopen(pipeFd[2][1],"w"),
+                phase, fdopen(pipeFd[2][0],"r"), fdopen(pipeFd[3][1],"w"),
+                phase, fdopen(pipeFd[3][0],"r"), fdopen(output[1],"w"),
+            };
+            ForkIntCode(IO,0,5,ram.data());
+            return 0;
+        }
+    }
     
     return 0;
 }
@@ -61,7 +91,7 @@ void ForkIntCode(FILE* IO[], int level, int max, int* ram)
     {
         if(level < max)
         {
-            wait(NULL);;
+            wait(NULL);
             ForkIntCode(IO, level + 1, max, ram);
         }
     }
