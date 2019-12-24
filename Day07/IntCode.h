@@ -388,17 +388,19 @@ int Equals(int* ram, int* instructArray, int instructionIndex)
 
 int Input(FILE* file, int* ram, int* instructArray, int instructionIndex)
 {
+    // printf("Waiting on input\n");
     switch(instructArray[FIRST_MODE])
     {
         case POS:
             fscanf(file,"%d",&ram[ram[instructionIndex+1]]);
-            printf("Read >> %d\n",ram[ram[instructionIndex+1]]);
+            // printf("Read >> %d\n",ram[ram[instructionIndex+1]]);
             break;
         case IM:
             fscanf(file,"%d",&ram[instructionIndex+1]); 
-            printf("Read >> %d\n",ram[instructionIndex+1]);
+            // printf("Read >> %d\n",ram[instructionIndex+1]);
             break;
     }
+    // printf("Input received\n");
     return instructionIndex + 2;
 }
 
@@ -407,12 +409,12 @@ int Output(FILE* file, int* ram, int* instructArray, int instructionIndex)
     switch(instructArray[FIRST_MODE])
     {
         case POS:
-            fprintf(file,"%d",ram[ram[instructionIndex+1]]);
-            printf("%d\n",ram[ram[instructionIndex+1]]);
+            fprintf(file,"%d\n",ram[ram[instructionIndex+1]]);
+            // printf("%d\n",ram[ram[instructionIndex+1]]);
             break;
         case IM:
-            fprintf(file,"%d",ram[instructionIndex+1]);
-            printf("%d\n",ram[ram[instructionIndex+1]]);
+            fprintf(file,"%d\n",ram[instructionIndex+1]);
+            // printf("%d\n",ram[ram[instructionIndex+1]]);
             break;
     }
     return instructionIndex + 2;

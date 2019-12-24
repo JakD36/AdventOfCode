@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <vector>
 #include <unistd.h>  
-
-#include "IntCode.h"
-
-
-
 #include<stdlib.h> 
 #include<sys/types.h> 
 #include<string.h> 
 #include<sys/wait.h> 
+#include <signal.h>
+
+#include "IntCode.h"
 
 using namespace std;
+
+void ForkIntCode(FILE* IO[], int level, int max, int* ram);
 
 int main()
 {
@@ -27,10 +27,7 @@ int main()
         fscanf(file,",");
     }    
     
-
-
-    int pipeFd[6][2];
-    pid_t p; 
+    int pipeFd[4][2];
 
     for(int i = 0; i < 6; ++i)
     {
@@ -40,93 +37,42 @@ int main()
             return 1; 
         }
     }
-    FILE* phase = fopen("Day07/phase.txt","r");
-    pid_t p1 = fork();
     
-    if(p1 > 0)
+    FILE* phase = fopen("Day07/phase.txt","r");
+    
+    FILE* init = fopen("Day07/init.txt","r");
+    FILE* IO[5 * 3] = 
     {
-        wait(NULL); // Wait on Child process to complete
-        
-        pid_t p2 = fork(); 
-        if(p2 > 0)
-        {
-            wait(NULL); // Wait on Child process to complete
-            
-            pid_t p3 = fork();
-            if(p3 > 0)
-            {
-                wait(NULL); // Wait on Child process to complete
-                
-                pid_t p4 = fork();
-                if(p4 > 0)
-                {
-                    wait(NULL); // Wait on Child process to complete
-                    
-                    pid_t p5 = fork();
-                    if(p5 == 0)
-                    {
-                    
-                        close(pipeFd[3][1]); // Close write end pipe 2
-                        FILE* input2 = fdopen(pipeFd[3][0],"r"); // Open FILE* to read end pipe 2
-                        FILE* input1 = phase;
-                        FILE* output = stdout;//fdopen(pipeFd[4][1],"w");
-                        RunIntCode(input1,input2,output,ram.data());
-                        fclose(input2);
-                        fclose(output);
-                    }
-                }
-                else if(p4 == 0)
-                {
-                    close(pipeFd[2][1]); // Close write end pipe 2
-                    FILE* input2 = fdopen(pipeFd[2][0],"r"); // Open FILE* to read end pipe 2
-                    FILE* input1 = phase;
-                    FILE* output = fdopen(pipeFd[3][1],"w");
-                    RunIntCode(input1,input2,output,ram.data());
-                    fclose(input2);
-                    fclose(output);
-                    close(pipeFd[3][1]);
-                }
-            }
-            else if(p3 == 0)
-            {
-                close(pipeFd[2][0]);
-                close(pipeFd[1][1]); // Close write end pipe 2
-                FILE* input2 = fdopen(pipeFd[1][0],"r"); // Open FILE* to read end pipe 2
-                FILE* input1 = phase;
-                FILE* output = fdopen(pipeFd[2][1],"w");
-                RunIntCode(input1,input2,output,ram.data());
-                fclose(input2);
-                fclose(output);
-                close(pipeFd[2][1]);
-            }
-        }
-        else if(p2 == 0)
-        {   
-            close(pipeFd[0][1]); // Close write end pipe 1
-            close(pipeFd[1][0]); // Close read end pipe 2
-            FILE* input2 = fdopen(pipeFd[0][0],"r"); // Open FILE* to read end pipe 1 
-            
-            FILE* input1 = phase;
-            FILE* output = fdopen(pipeFd[1][1],"w"); // open write end of pipe 2 for output
-            RunIntCode(input1,input2,output,ram.data());
-            fclose(input2);
-            fclose(output);
-            close(pipeFd[1][1]);
-            close(pipeFd[0][0]);
-        }
-    }
-    else if(p1 == 0)
-    {
-        FILE* input2 = stdin;
-        FILE* input1 = phase;
-        FILE* output = fdopen(pipeFd[0][1],"w");
-        close(pipeFd[0][0]); // Close read end
-        RunIntCode(input1,input2,output,ram.data());
-        fclose(output);
-        close(pipeFd[0][1]); // Close write end
-    }
+        phase, init, fdopen(pipeFd[0][1],"w"),
+        phase, fdopen(pipeFd[0][0],"r"), fdopen(pipeFd[1][1],"w"),
+        phase, fdopen(pipeFd[1][0],"r"), fdopen(pipeFd[2][1],"w"),
+        phase, fdopen(pipeFd[2][0],"r"), fdopen(pipeFd[3][1],"w"),
+        phase, fdopen(pipeFd[3][0],"r"), stdout,
+    };
+    ForkIntCode(IO,0,5,ram.data());
     
     return 0;
 }
   
-
+void ForkIntCode(FILE* IO[], int level, int max, int* ram)
+{
+    pid_t p = fork();
+    if(p > 0)
+    {
+        if(level < max)
+        {
+            wait(NULL);;
+            ForkIntCode(IO, level + 1, max, ram);
+        }
+    }
+    else if (p == 0)
+    {
+        int arrayStart = level * 3;
+        int input1 = arrayStart;
+        int input2 = arrayStart + 1;
+        int output = arrayStart + 2;
+        RunIntCode(IO[input1],IO[input2],IO[output],ram);
+        fclose(IO[input2]);
+        fclose(IO[output]);
+    }
+}
