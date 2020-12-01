@@ -22,7 +22,7 @@ int main() {
         {
             inputs.push_back(val);
         }
-
+        
         std::sort(begin(inputs),end(inputs));
         int solution = FindSolutionFromSortedInputs(inputs);
 //        int solution = FindSolutionFromBruteForce(inputs);
@@ -47,10 +47,13 @@ inline int FindSolutionFromBruteForce(std::vector<int> &inputs)
     {
         for(int b : inputs)
         {
-            int sum = a + b;
-            if(sum == 2020)
+            for(int c :inputs)
             {
-                return a * b;
+                int sum = a + b + c;
+                if(sum == 2020)
+                {
+                    return a * b * c;
+                }
             }
         }
     }
@@ -63,20 +66,27 @@ inline int FindSolutionFromSortedInputs(std::vector<int> &inputs)
     {
         for(int b : inputs)
         {
-            int sum = a + b;
-            int diff = sum - 2020;
-            if(diff < 0)
-            {
+            int sum1 = a + b;
+            int diff = sum1 - 2020;
+            if(diff > 0) //
                 continue;
-            }
-            else if(diff == 0)
+            for(int c : inputs)
             {
-                // found the solution
-                return a * b;
-            }
-            else
-            {
-                break; // Our sum is greater than 2020 no solution after will work
+                int sum2 = sum1 + c;
+                int diff = sum2 - 2020;
+                if(diff < 0)
+                {
+                    continue;
+                }
+                else if(diff == 0)
+                {
+                    // found the solution
+                    return a * b * c;
+                }
+                else
+                {
+                    break; // Our sum is greater than 2020 no solution after will work
+                }
             }
         }
     }
