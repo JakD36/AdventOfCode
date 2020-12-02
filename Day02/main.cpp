@@ -2,6 +2,46 @@
 #include <algorithm>
 #include <chrono>
 
+bool Part1IsValid(char* passwd, char required, int min, int max);
+bool Part2IsValid(char* passwd, char required, int pos1, int pos2);
+void DebugPrint(int min, int max, int count, char required, char* passwd);
+int CountManual(char* passwd, char required);
+
+int main() {
+    auto start = std::chrono::steady_clock::now();
+
+    char filepath[] = "input.txt";
+    FILE* file;
+    file = fopen(filepath,"r");
+
+    if(file)
+    {
+        int validCount = 0;
+
+        int a, b;
+        char required;
+        char passwd[50];
+        while(fscanf(file,"%d-%d %c: %s",&a,&b,&required,passwd) != EOF)
+        {
+//            if(Part1IsValid(passwd,required,a,b))
+//                ++validCount;
+            if(Part2IsValid(passwd,required,a,b))
+                ++validCount;
+        }
+        printf("\nValid %d\n",validCount);
+
+        fclose(file);
+    }
+    else
+    {
+        printf("Failed to open %s",filepath);
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    printf("%d microseconds\n",duration);
+    return 0;
+}
 
 
 int CountManual(char* passwd, char required)
@@ -33,46 +73,27 @@ void DebugPrint(int min, int max, int count, char required, char* passwd)
     }
 }
 
-int main() {
-    auto start = std::chrono::steady_clock::now();
 
-    char filepath[] = "input.txt";
-    FILE* file;
-    file = fopen(filepath,"r");
+/// Password is valid when the required character appears inclusively between min and max times.
+///
+bool Part1IsValid(char* passwd, char required, int min, int max)
+{
+    auto index = std::find(passwd,passwd+50,'\0');
+    int count = std::count(passwd,index,required);
 
-    if(file)
-    {
-        int validCount = 0;
+//    DebugPrint(min,max,count,required,passwd);
+//    Turns out I was encountering an error where, I wasn't clearing the buffer, or checking where the \0 null char is
+//    int count = std::count(passwd,passwd+50,required);
+//    std::fill(passwd,passwd+50,' ');
 
-        int min, max;
-        char required;
-        char passwd[50];
-        while(fscanf(file,"%d-%d %c: %s",&min,&max,&required,passwd) != EOF)
-        {
-            auto index = std::find(passwd,passwd+50,'\0');
-            int count = std::count(passwd,index,required);
+    return min <= count && count <= max;
+}
 
-            DebugPrint(min,max,count,required,passwd);
 
-//            Turns out I was encountering an error where, I wasn't clearing the buffer, or checking where the \0 null char is
-//            int count = std::count(passwd,passwd+50,required);
-//            std::fill(passwd,passwd+50,' ');
-
-            if(min <= count && count <= max) {
-                ++validCount;
-            }
-        }
-        printf("\nValid %d\n",validCount);
-
-        fclose(file);
-    }
-    else
-    {
-        printf("Failed to open %s",filepath);
-    }
-
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    printf("%d microseconds\n",duration);
-    return 0;
+/// Password Is valid when the characters at pos1 or pos2 equal the required character but not both.
+/// Positions provided start at index 1 not 0.
+///
+bool Part2IsValid(char* passwd, char required, int pos1, int pos2)
+{
+    return ((passwd[pos1-1] == required) + (passwd[pos2-1] == required)) == 1;
 }
