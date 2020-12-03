@@ -3,6 +3,9 @@
 #include <chrono>
 
 void Part1(FILE* file);
+void Part2(FILE* file);
+std::vector<unsigned int> CreateMap(FILE* file);
+int CountTreesOnSlope(std::vector<unsigned int>& map, int right, int down, int width = 31);
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -13,7 +16,8 @@ int main() {
 
     if(file)
     {
-        Part1(file);
+//        Part1(file);
+        Part2(file);
     }
     else
     {
@@ -28,8 +32,25 @@ int main() {
 
 void Part1(FILE* file)
 {
-    int down = 1, right = 3;
+    std::vector<unsigned int> map = CreateMap(file);
+    int treeCount = CountTreesOnSlope(map, 3, 1);
+    printf("Tree Count %d\n",treeCount);
+}
 
+void Part2(FILE* file)
+{
+    std::vector<unsigned int> map = CreateMap(file);
+    unsigned long total = CountTreesOnSlope(map, 1, 1);
+    total *= CountTreesOnSlope(map, 3, 1);
+    total *= CountTreesOnSlope(map, 5, 1);
+    total *= CountTreesOnSlope(map, 7, 1);
+    total *= CountTreesOnSlope(map, 1, 2);
+
+    printf("Total %lu \n",total);
+}
+
+std::vector<unsigned int> CreateMap(FILE* file)
+{
     char line[50];
     std::vector<unsigned int> map;
     // Store our tree map
@@ -46,14 +67,18 @@ void Part1(FILE* file)
         }
         map.push_back(row);
     }
+    return map;
+}
 
+int CountTreesOnSlope(std::vector<unsigned int>& map, int right, int down, int width)
+{
     // Find the number of trees on the path defined by down, right
     int treeCount = 0;
     int x = 0,y = 0;
     while(y < map.size())
     {
-        treeCount += ( map[y] & (1 << (x % 31)) ) > 0;
+        treeCount += ( map[y] & (1 << (x % width)) ) > 0;
         x += right; y += down;
     }
-    printf("Tree Count %d\n",treeCount);
+    return treeCount;
 }
