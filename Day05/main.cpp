@@ -5,6 +5,7 @@
 void Part1(FILE* file);
 void Part2(FILE* file);
 void Part2Smart(FILE* file);
+void Part2Compact(FILE* file);
 void Visualise(bool seats[1024], int min, int max);
 
 int main() {
@@ -16,7 +17,7 @@ int main() {
 
     if(file)
     {
-        Part2Smart(file);
+        Part2Compact(file);
     }
     else
     {
@@ -121,6 +122,41 @@ void Part2Smart(FILE* file) // Wanted to test + compare andrews solution, signif
     }
     for(int i = min; i < max + 1; ++i){sum += i;}
     printf("%d\n",sum);
+}
+
+void Part2Compact(FILE* file)
+{
+    unsigned char plane[128] = {0};
+    char tmp[12];
+    while(fgets(tmp,12,file) != nullptr)
+    {
+        unsigned int row = 0;
+        for(int i = 0; i < 7; ++i)
+        {
+            row |= (tmp[i] == 'B') << (6 - i);
+        }
+        int seat = 0;
+        for(int i = 7; i < 10; ++i)
+        {
+            seat |= (tmp[i] == 'R') << (9 - i);
+        }
+        plane[row] |= 1 << seat;
+    }
+
+    for(int i = 0; i < 128; ++i)
+    {
+        if(plane[i] > 0 && plane[i] < 255)
+        {
+            for(unsigned int j = 0; j < 8; ++j)
+            {
+                if( (plane[i] & (1 << j)) == 0)
+                {
+                    printf("%d\n",i * 8 + j);
+                    return;
+                }
+            }
+        }
+    }
 }
 
 void Visualise(bool seats[1024], int min, int max)
