@@ -3,6 +3,7 @@
 #include <chrono>
 
 void Part1(FILE* file);
+void Part2(FILE* file);
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -13,7 +14,7 @@ int main() {
 
     if(file)
     {
-        Part1(file);
+        Part2(file);
     }
     else
     {
@@ -51,6 +52,46 @@ void Part1(FILE* file)
             printf("Group Count %d\n",groupCount);
             count += groupCount;
             answers = 0;
+        }
+    }
+
+    int groupCount = 0;
+    for(unsigned int i = 0; i < 26; ++i)
+    {
+        groupCount += (answers & (1U << i)) > 0;
+    }
+    printf("Group Count %d\n",groupCount);
+    count += groupCount;
+    printf("%d\n",count);
+}
+
+void Part2(FILE* file)
+{
+    unsigned int answers = INT32_MAX, count = 0;
+    char buffer[28];
+    while(fgets(buffer,28,file) != nullptr)
+    {
+        if(buffer[0] != '\n')
+        {
+            int i = 0;
+            unsigned int personAnswer = 0;
+            while(buffer[i] != '\0' && buffer[i] != '\n')
+            {
+                personAnswer |= 1U << (buffer[i] - 'a');
+                ++i;
+            }
+            answers &= personAnswer;
+        }
+        else
+        {
+            int groupCount = 0;
+            for(unsigned int i = 0; i < 26; ++i)
+            {
+                groupCount += (answers & (1U << i)) > 0;
+            }
+            printf("Group Count %d\n",groupCount);
+            count += groupCount;
+            answers = INT32_MAX;
         }
     }
 
