@@ -14,12 +14,16 @@ public:
     std::string Name;
     std::vector<Bag*> Parents;
     std::vector<Bag*> Children;
+    std::vector<int> ChildCount;
 
     Bag(std::string name)
     {
         Name = name;
     }
 };
+
+std::unordered_map<std::string,Bag*> BuildTree(FILE* file);
+int RecursiveCount(int current, Bag* bag);
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -30,7 +34,7 @@ int main() {
 
     if(file)
     {
-        Part1(file);
+        Part2(file);
     }
     else
     {
@@ -61,32 +65,7 @@ Bag* FindOrCreate(std::unordered_map<std::string,Bag*> &map, std::string name)
 
 void Part1(FILE* file)
 {
-
-    // Build our tree
-    char buffer[30];
-    char buffer2[30];
-    char buffer3[128];
-    buffer[0] = '\0';
-    buffer2[0] = '\0';
-    buffer3[0] = '\0';
-    std::unordered_map<std::string,Bag*> map;
-    while(fscanf(file,"%s %s %*s %*s %[^\n]",buffer,buffer2,buffer3) != EOF)
-    {
-        std::string name(buffer); name.append(" ").append(buffer2);
-        Bag* bag = FindOrCreate(map,name);
-
-        int offset = 0;
-        int count, bytesRead;
-        char b1[30] = "\0";
-        char b2[30] = "\0";
-        while(sscanf(&buffer3[offset], "%d %s %s %*s %n",&count,b1,b2,&bytesRead) != EOF)
-        {
-            std::string subBag(b1); subBag.append(" ").append(b2);
-            Bag* sub = FindOrCreate(map,subBag);
-            sub->Parents.push_back(bag);
-            offset += bytesRead;
-        }
-    }
+    auto map = BuildTree(file);
 
     // count
     std::set<Bag*> uniqueBagsContaining;
@@ -102,4 +81,64 @@ void Part1(FILE* file)
             uniqueBagsContaining.emplace(next);
     }
     printf("%d\n",uniqueBagsContaining.size());
+}
+
+void Part2(FILE* file)
+{
+    // Build our tree
+    auto map = BuildTree(file);
+
+    // count
+    std::set<Bag*> uniqueBagsContaining;
+    auto gold = map.find("shiny gold");
+
+    int total = RecursiveCount(1,gold->second) - 1; // subtract 1 as we don't count the shiny gold bag
+
+    printf("%d\n",total);
+}
+
+int RecursiveCount(int current, Bag* bag)
+{
+    int total = current;
+    for(int i = 0; i < bag->Children.size(); ++i)
+    {
+        total += RecursiveCount(bag->ChildCount[i] * current, bag->Children[i]);
+    }
+    return total;
+}
+
+std::unordered_map<std::string,Bag*> BuildTree(FILE* file)
+{
+    char buffer[60];
+    char buffer2[60];
+    char buffer3[128];
+    buffer[0] = '\0';
+    buffer2[0] = '\0';
+    buffer3[0] = '\0';
+    std::unordered_map<std::string,Bag*> map;
+    while(fscanf(file,"%s %s %*s %*s %[^\n]",buffer,buffer2,buffer3) != EOF)
+    {
+        std::string name(buffer); name.append(" ").append(buffer2);
+        Bag* bag = FindOrCreate(map,name);
+
+        int offset = 0;
+        int count = 0, bytesRead = 0;
+        char b1[30] = "\0";
+        char b2[30] = "\0";
+        int result = sscanf(&buffer3[offset], "%d %s %s %*s %n",&count,b1,b2,&bytesRead);
+        do
+        {
+            if(result != 3)
+                break;
+
+            std::string subBag(b1); subBag.append(" ").append(b2);
+            Bag* sub = FindOrCreate(map,subBag);
+            sub->Parents.push_back(bag);
+            bag->ChildCount.push_back(count);
+            bag->Children.push_back(sub);
+            offset += bytesRead;
+            result = sscanf(&buffer3[offset], "%d %s %s %*s %n",&count,b1,b2,&bytesRead);
+        }while(result != EOF);
+    }
+    return map;
 }
