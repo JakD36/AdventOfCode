@@ -21,6 +21,7 @@ void Part1(FILE* file);
 void Part2(FILE* file);
 void Part2Brute(FILE* file);
 void Analyse(FILE* file);
+void Part2Smart(FILE* file);
 
 std::vector<Instruction> Parse(FILE* file);
 void ExecuteBootCode(std::vector<Instruction> &instructions);
@@ -34,7 +35,7 @@ int main() {
 
     if(file)
     {
-        Analyse(file);
+        Part2(file);
     }
     else
     {
@@ -76,7 +77,7 @@ void Part1(FILE* file)
     }
 }
 
-void Part2(FILE* file)
+void Part2(FILE* file) // WIP: Idea is to reduce the analyses to nodes that cause a loop
 {
     auto instructions = Parse(file);
     int instructionCount = instructions.size();
@@ -182,9 +183,51 @@ void Part2Brute(FILE* file) // Instruction 363 is the problem (line 364)
 
 }
 
-void Analyse()
+void Part2Smart(FILE* file)
 {
-    
+
+}
+
+// Generates a dot file that can be used to create a directed graph of the execution paths as they are
+void Analyse(FILE* file)
+{
+    auto instructions = Parse(file);
+    int instructionsCount = instructions.size();
+    FILE* wf = fopen("graph","w");
+    fprintf(wf,"digraph {\n");
+    for(int i = instructionsCount - 1; i >= 1; --i)
+    {
+        switch(instructions[i].m_type)
+        {
+            case Type::nop:
+                fprintf(wf,"\t%d [color=\"red\" shape=circle style=filled]",i);
+                fprintf(wf,"\t%d -> %d\n",i,i+1);
+                break;
+            case Type::acc:
+                fprintf(wf,"\t%d -> %d\n",i,i+1);
+                break;
+            case Type::jmp:
+                fprintf(wf,"\t%d [color=\"lightblue\" shape=circle style=filled]\n",i);
+                fprintf(wf,"\t%d -> %d\n",i,i+instructions[i].m_val);
+                break;
+        }
+    }
+    switch(instructions[0].m_type)
+    {
+        case Type::nop:
+            fprintf(wf,"\t%d [color=\"green\" shape=circle style=filled]",0);
+            fprintf(wf,"\t%d -> %d\n",0,1);
+            break;
+        case Type::acc:
+            fprintf(wf,"\t%d -> %d\n",0,1);
+            break;
+        case Type::jmp:
+            fprintf(wf,"\t%d [color=\"green\" shape=circle style=filled]\n",0);
+            fprintf(wf,"\t%d -> %d\n",0,0+instructions[0].m_val);
+            break;
+    }
+    fprintf(wf,"\t%d [color=\"magenta\" shape=circle style=filled]",instructionsCount);
+    fprintf(wf,"}");
 }
 
 
