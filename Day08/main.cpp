@@ -17,6 +17,14 @@ public:
     int m_val;
 };
 
+struct Node
+{
+public:
+    Type m_type;
+    int m_val;
+    std::vector<int> m_from;
+};
+
 void Part1(FILE* file);
 void Part2(FILE* file);
 void Part2Brute(FILE* file);
@@ -24,6 +32,7 @@ void Analyse(FILE* file);
 void Part2Smart(FILE* file);
 
 std::vector<Instruction> Parse(FILE* file);
+std::vector<Node> ParseToNodes(FILE* file);
 void ExecuteBootCode(std::vector<Instruction> &instructions);
 
 int main() {
@@ -35,7 +44,7 @@ int main() {
 
     if(file)
     {
-        Part2(file);
+        Part2Smart(file);
     }
     else
     {
@@ -170,7 +179,7 @@ void Part2Brute(FILE* file) // Instruction 363 is the problem (line 364)
         }
         if(executionCount == instructionCount)
         {
-            printf("Error %d\n",n);
+//            printf("Error %d\n",n);
             instructions[n].m_type = instructions[n].m_type == Type::nop ? Type::jmp : Type::nop;
         }
         else
@@ -183,9 +192,88 @@ void Part2Brute(FILE* file) // Instruction 363 is the problem (line 364)
 
 }
 
+std::vector<Node> ParseToNodes(FILE* file)
+{
+    std::vector<Node> nodes(609); // 608 known lines in the file + 1
+
+    char opStr[4];
+    int val, i = 0;
+    while(fscanf(file,"%s %d",opStr,&val) != EOF)
+    {
+        if(strcmp(opStr,"nop") == 0)
+        {
+            nodes[i].m_val = val;
+            nodes[i].m_type = Type::nop;
+            nodes[i+1].m_from.push_back(i);
+        }
+        else if(strcmp(opStr,"acc") == 0)
+        {
+            nodes[i].m_val = val;
+            nodes[i].m_type = Type::acc;
+            nodes[i+1].m_from.push_back(i);
+        }
+        else if(strcmp(opStr,"jmp") == 0)
+        {
+            nodes[i].m_val = val;
+            nodes[i].m_type = Type::jmp;
+            nodes[i+val].m_from.push_back(i);
+        } else
+            assert("Error: Unexpected Instruction type!");
+        ++i;
+    }
+    return nodes;
+}
+
+
+void FindAllNodesThatPointToEnd(int i, std::vector<Node> &nodes, std::vector<int> &output)
+{
+    output.push_back(i);
+    for(auto& from : nodes[i].m_from){
+        FindAllNodesThatPointToEnd(from,nodes,output);
+    }
+}
+
 void Part2Smart(FILE* file)
 {
+    auto nodes = ParseToNodes(file);
 
+    std::vector<int> nodesToEnd;
+    FindAllNodesThatPointToEnd(608,nodes,nodesToEnd);
+
+    int global = 0, i = 0;
+    int instructionCount = nodes.size();
+    bool fixed = false;
+    while(i < instructionCount)
+    {
+        switch(nodes[i].m_type)
+        {
+            case Type::jmp:
+                if(!fixed && std::find(begin(nodesToEnd),end(nodesToEnd),i + 1) != end(nodesToEnd))
+                {
+                    nodes[i].m_type = Type::nop;
+                    fixed = true;
+                    continue;
+                }
+                i += nodes[i].m_val;
+                break;
+            case Type::acc:
+                global += nodes[i].m_val;
+                ++i;
+                break;
+            case Type::nop:
+                if(!fixed && std::find(begin(nodesToEnd),end(nodesToEnd),i + nodes[i].m_val) != end(nodesToEnd))
+                {
+                    nodes[i].m_type = Type::jmp;
+                    fixed = true;
+                    continue;
+                }
+                ++i;
+                break;
+            default:
+                assert("Unexpected instruction."); break;
+        }
+    }
+    printf("Global %d\n",global);
 }
 
 // Generates a dot file that can be used to create a directed graph of the execution paths as they are
