@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cstdio>
+#include <vector>
 
 void Part1(FILE* file);
 void Part2(FILE* file);
@@ -14,7 +15,7 @@ int main() {
 
     if(file)
     {
-        Part1(file);
+        Part2(file);
     }
     else
     {
@@ -68,4 +69,48 @@ bool CheckValid(int preamble[], int preambleLen, int val)
         }
     }
     return false;
+}
+
+void Part2(FILE* file)
+{
+    const int invalidNumber = 393911906;
+
+    // Cache all values
+    std::vector<int> values;
+    values.reserve(500);
+    int buf;
+    while(fscanf(file,"%d",&buf) != EOF)
+    {
+        values.push_back(buf);
+    }
+
+    int count = values.size();
+    int start = 0, end = 1;
+    int sum = values[start] + values[end];
+    while(end != count && start != count-1)
+    {
+        if(sum < invalidNumber)
+        {
+            ++end;
+            sum += values[end];
+        }
+        else if (sum > invalidNumber)
+        {
+            sum -= values[start];
+            ++start;
+        }
+        else
+        {
+            int min = INT32_MAX, max = INT32_MIN;
+            for(int i = start; i < end + 1; ++i)
+            {
+                min = values[i] < min ? values[i] : min;
+                max = values[i] > max ? values[i] : max;
+            }
+            printf("Result = %d\n",min+max);
+            break;
+        }
+//        printf("%3d %3d\t %6d == %6d\n",start,end,sum,invalidNumber);
+    }
+
 }
