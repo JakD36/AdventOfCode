@@ -9,7 +9,7 @@ void Part2(FILE* file);
 int main() {
     auto start = std::chrono::steady_clock::now();
 
-    char filepath[] = "testInput2.txt";
+    char filepath[] = "input.txt";
     FILE* file;
     file = fopen(filepath,"r");
 
@@ -79,21 +79,68 @@ void Part2(FILE* file)
                 break;
             }
         }
-        printf("%d\n",freq[i]);
+//        printf("%d\n",freq[i]);
     }
 
-    int branches = 1;
-//
-//    for(int i = 0; i < count;)
-//    {
-//        if(i == 1){++i;}
-//        if(i == 2)
-//        {
-//
-//        }
-//    }
+    // validate my assumption that, branches follow a distinct pattern that simplifies
+    // the process of calculating number of branches
+    // if we have a frequency of 3, it must be followed by 1,1,1 or 2,1,1 or 3,2,1
+    // if we have a frequency of 2, it must be followed by 1,1
+    /*
+    for(int i = 0; i < count-1; ++i)
+    {
+        if(freq[i] > 1)
+            printf("%d -> %d %d %d == %d -> %d %d %d\n",freq[i],freq[i+1],freq[i+2],freq[i+3],adapters[i],adapters[i+1],adapters[i+2],adapters[i+3]);
+        if(freq[i] == 3)
+        {
+            assert((freq[i+1] == 1 && freq[i+2] == 1 && freq[i+3] == 1) ||
+                           (freq[i+1] == 2 && freq[i+2] == 1 && freq[i+3] == 1) ||
+                           (freq[i+1] == 3 && freq[i+2] == 2 && freq[i+3] == 1) );
+        }
+        if(freq[i] == 2)
+        {
+            assert(freq[i+1] == 1 && freq[i+2] == 1);
+        }
+        // no assert at this point so the idea is correct
+    }
+    */
 
-    printf("Branches %d\n",branches);
+    unsigned long branches = 1;
+    for(int i = 0; i < count-1;)
+    {
+        switch (freq[i])
+        {
+            case 1:
+                ++i; // No extra branch so don't need to change multiply
+                break;
+            case 2:
+                branches *= 2; // Freq 2 is followed by 1,1 so we just have 2 new branches to multiply by
+                i += 3;
+                break;
+            case 3:
+                int sum = freq[i+1] + freq[i+2] + freq[i+3];
+                switch (sum)
+                {
+                    case 3: // 1,1,1
+                        branches *= 3;
+                        i+=4;
+                        break;
+                    case 4: // 2,1,1
+                        branches *= 4;
+                        i += 4;
+                        break;
+                    case 6: // 3,2,1
+                        // Going by the pattern we have established where 2 is followed by 1,1
+                        // it must go 3,2,1,1 if the next 3 freqs add to 6,
+                        // so we can multiply the current number of branches by 7 3+2+1+1, and skip 5 indexes ahead
+                        branches *= 7;
+                        i += 5;
+                        break;
+                }
+                break;
+        }
+    }
+    printf("Total %lu\n",branches);
 
 
 }
