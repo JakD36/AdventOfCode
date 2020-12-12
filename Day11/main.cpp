@@ -3,19 +3,22 @@
 #include <vector>
 #include <algorithm>
 
-void Part1(FILE* file);
-void Part2(FILE* file);
+void Core(FILE* file);
 
 const int cols = 91;
 const int rows = 98;
+//const int cols = 10;
+//const int rows = 10;
 
 const char floor = -1;
 const char empty = 0;
 const char taken = 1;
 
-bool Simulate(char read[rows+2][cols+2], char write[rows+2][cols+2]);
+bool SimulatePart1(char read[rows+2][cols+2], char write[rows+2][cols+2]);
+bool SimulatePart2(char read[rows+2][cols+2], char write[rows+2][cols+2]);
 int Count(char read[rows+2][cols+2]);
 void PrintBuffer(char buf[rows+2][cols+2]);
+bool CheckDirection(char read[rows+2][cols+2], int i, int j, char x, char y);
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -26,7 +29,7 @@ int main() {
 
     if(file)
     {
-        Part1(file);
+        Core(file);
     }
     else
     {
@@ -39,7 +42,7 @@ int main() {
     return 0;
 }
 
-void Part1(FILE* file)
+void Core(FILE* file)
 {
     char buf[2][rows+2][cols+2];
     int halfBufferSize = (rows + 2) * (cols + 2);
@@ -56,9 +59,11 @@ void Part1(FILE* file)
             {
                 case 'L':
                     buf[0][row][i+1] = empty;
+                    buf[1][row][i+1] = empty;
                     break;
                 case '.':
                     buf[0][row][i+1] = floor;
+                    buf[1][row][i+1] = floor;
                     break;
             }
         }
@@ -70,16 +75,14 @@ void Part1(FILE* file)
     char read = 0, write = 1;
     while(change)
     {
-        //        PrintBuffer(buf[read]);
-        change = Simulate(buf[read],buf[write]);
+        PrintBuffer(buf[read]);
+        change = SimulatePart2(buf[read],buf[write]);
         memcpy((char*)buf[read], (char*)buf[write], halfBufferSize);
-
-        read = (read + 1) % 2;write = (write + 1) % 2;
     }
     printf("%d\n",Count(buf[read]));
 }
 
-bool Simulate(char read[rows+2][cols+2], char write[rows+2][cols+2])
+bool SimulatePart1(char read[rows+2][cols+2], char write[rows+2][cols+2])
 {
     bool change = false;
     for(int i = 1; i < rows+1; ++i)
@@ -117,12 +120,70 @@ bool Simulate(char read[rows+2][cols+2], char write[rows+2][cols+2])
     return change;
 }
 
+bool SimulatePart2(char read[rows+2][cols+2], char write[rows+2][cols+2])
+{
+    bool change = false;
+    for(int i = 1; i < rows+1; ++i)
+    {
+        for(int j = 1; j < cols+1; ++j)
+        {
+            if(read[i][j] == floor)
+                continue;
+
+            int sum =
+                    CheckDirection(read,i,j,-1,-1) +
+                    CheckDirection(read,i,j,-1,0) +
+                    CheckDirection(read,i,j,-1,1) +
+
+                    CheckDirection(read,i,j,0,-1) +
+                    CheckDirection(read,i,j,0,1) +
+
+                    CheckDirection(read,i,j,1,-1) +
+                    CheckDirection(read,i,j,1,0) +
+                    CheckDirection(read,i,j,1,1);
+
+            if(sum == 0 && read[i][j] == empty)
+            {
+                write[i][j] = taken;
+                change = true;
+            }
+            else if (sum >= 5 && read[i][j] == taken)
+            {
+                write[i][j] = empty;
+                change = true;
+            }
+        }
+    }
+    return change;
+}
+
+bool CheckDirection(char read[rows+2][cols+2], int i, int j, char x, char y)
+{
+    i+=x; j+=y;
+    for(;
+    i < rows + 1 && i > 0
+            && j < cols + 1 && j > 0;
+    i+=x, j+=y)
+    {
+        switch (read[i][j])
+        {
+            case empty:
+                return false;
+            case taken:
+                return true;
+            case floor:
+                continue;
+        }
+    }
+    return false;
+}
+
 int Count(char read[rows+2][cols+2])
 {
     int count = 0;
-    for(int i = 1; i < rows+2; ++i)
+    for(int i = 1; i < rows+1; ++i)
     {
-        for(int j = 1; j < cols+2; ++j)
+        for(int j = 1; j < cols+1; ++j)
         {
             if(read[i][j] == taken)
                 ++count;
