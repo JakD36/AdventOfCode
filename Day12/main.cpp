@@ -2,8 +2,11 @@
 #include <cstdio>
 #include <vector>
 #include <algorithm>
+#include <valarray>
 
 void Part1(FILE* file);
+void Part2(FILE* file);
+std::valarray<int> Rotate(std::valarray<int> pos, int degrees);
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -14,7 +17,7 @@ int main() {
 
     if(file)
     {
-        Part1(file);
+        Part2(file);
     }
     else
     {
@@ -64,5 +67,54 @@ void Part1(FILE* file)
     }
     printf("North %d East %d\n",pos[0]-pos[2],pos[1]-pos[3]);
     int manhattenDistance = abs(pos[0] - pos[2]) + abs(pos[1]-pos[3]);
+    printf("%d\n",manhattenDistance);
+}
+
+std::valarray<int> Rotate(std::valarray<int> pos, int degrees)
+{
+    float radians = (float)degrees * (M_PI / 180.f);
+    float c = cos(radians);
+    float s = sin(radians);
+    float x = pos[0] * c - pos[1] * s;
+    float y = pos[0] * s + pos[1] * c;
+    return {(int)round(x), (int)round(y)};
+}
+
+void Part2(FILE* file)
+{
+    std::valarray<int> pos = {0,0};
+    std::valarray<int> way = {10,1};
+
+    char op;
+    int val;
+    while(fscanf(file,"%c%d\n",&op,&val) != EOF)
+    {
+        switch (op) {
+            case 'F':
+                pos += way * val;
+                break;
+            case 'L':
+                way = Rotate(way,val);
+                break;
+            case 'R':
+                val *= -1;
+                way = Rotate(way,val);
+                break;
+            case 'N':
+                way[1] += val;
+                break;
+            case 'E':
+                way[0] += val;
+                break;
+            case 'S':
+                way[1] -= val;
+                break;
+            case 'W':
+                way[0] -= val;
+                break;
+        }
+    }
+    printf("North %d East %d\n",pos[0],pos[1]);
+    int manhattenDistance = abs(pos[0]) + abs(pos[1]);
     printf("%d\n",manhattenDistance);
 }
