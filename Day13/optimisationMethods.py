@@ -24,7 +24,7 @@ def Example():
     If we solve for this we can multiply the x value we find by 17 we get our answer
     """
     def func(arr):
-        return 13 * (arr[1] / arr[0]) - (2 / arr[0]) - 17
+        return 13 * arr[1] - 2 - 17 * arr[0]
     initPos = array([200, 200])
     x = Solve(initPos, func)
     print(17 * x)
@@ -47,25 +47,21 @@ def Solve(initPos, func):
     step = 1
     pos = initPos
     dir = array([step,0])
+    current = func(pos)
     while(True):
-        current = func(pos)
-        if current == 0:
-            print(pos)
-            break
+        pass
+        # Find Direction
+        p1 = abs(func(pos + array([-1, 1])))
+        p2 = abs(func(pos + array([0, 1])))
+        p3 = abs(func(pos + array([1, 1])))
 
-        next = func(pos + dir)
-        if abs(next) > abs(current):
-            dir[0], dir[1] = dir[1],dir[0] # Rotate our direction
-            p1 = func(pos + dir)
-            p2 = func(pos - dir)
+        p4 = abs(func(pos + array([-1, 0])))
+        p5 = abs(func(pos + array([1, 0])))
 
-            if abs(current) < abs(p1) and abs(current) < abs(p2):
-                pos += 100
+        p6 = abs(func(pos + array([-1, -1])))
+        p7 = abs(func(pos + array([0, -1])))
+        p8 = abs(func(pos + array([1, -1])))
 
-            if abs(p1) > abs(p2):
-                dir *= -1
-        else:
-            pos += dir
 
     return pos[0]
 
@@ -78,14 +74,60 @@ def Solve(initPos, func):
     # Graph(func,n1)
 
 if __name__ == "__main__":
-    Actual()
-    # f = open("input.txt")
-    # lines = f.readlines()
-    # chars = lines[1].split(',')
-    #
-    # vals = []
-    # for x in range(len(chars)):
-    #     if chars[x].isdigit():
-    #         vals.append((int(chars[x]),x))
-    #
-    # print(vals)
+    # x = arange(0,4000,1)
+    # y1 = (1/17 * x) % 1
+    # y2 = (1/13 * (x + 2) ) % 1
+    # y3 = (1/19 * (x + 3)) % 1
+    # setup2d()
+    # plot(x, y1)
+    # plot(x, y2)
+    # plot(x, y3)
+    # xlim(100, 110)
+    # ylim(0, 1)
+    # show()
+    # These all equal 0 at the same time at 3417
+
+    # print(1 / 17 * 3417)
+    # print(1 / 13 * (3417+2))
+    # print(1 / 19 * (3417+3))
+
+    # x = arange(0,100,1)
+    # y1 = 6 + 13 * x
+    # y2 = 11 + 19 * x
+    # setup2d()
+    # plot(x, y1)
+    # plot(x, y2)
+    # show()
+
+    def meet(a,b):
+        def func(n):
+            return (a[0] * n - a[1] + b[1]) / b[0]
+        init = -1
+        for x in range(1,b[0]) :
+            result = func(x)
+            if result % 1 == 0:
+                init = -x
+                break
+        repeats = b[0]
+        return (repeats, init)
+
+    f = open("input.txt")
+    lines = f.readlines()
+    chars = lines[1].split(',')
+    vals = []
+    for x in range(len(chars)):
+        if chars[x].strip().isdigit():
+            vals.append((int(chars[x]),x))
+
+    meets = []
+    for x in range(1,len(vals)):
+        meets.append(meet(vals[0],vals[x]))
+
+    next = []
+    congragate = meets[0]
+    for x in range(1,len(meets)):
+        tmp = meet(congragate,meets[x])
+        congragate = (congragate[0] * tmp[0], congragate[0] * tmp[1] + congragate[1])
+
+    print(congragate[1] * vals[0][0])
+
