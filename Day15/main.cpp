@@ -3,8 +3,7 @@
 #include <unordered_map>
 #include <queue>
 
-void Part1();
-void Part2();
+void Solve();
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -40,7 +39,11 @@ void Solve()
 //    int lastNumberSpoken = 6;
 //    int startIndex = 4;
 
-    
+    FILE* file = fopen("debug.txt","w");
+    for(auto& x : map)
+    {
+        fprintf(file,"%d\n",x.first);
+    }
 
     int part1Count = 2021;
     int part2Count = 30000001;
@@ -69,9 +72,9 @@ void Solve()
                 map[lastNumberSpoken].push(i);
             }
         }
-
-//        printf("%d\n",lastNumberSpoken);
+        fprintf(file,"%d\n",lastNumberSpoken);
     }
+    fclose(file);
     printf("%d\n",lastNumberSpoken);
 
 }
