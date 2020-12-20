@@ -12,12 +12,12 @@ int main(int argc, char *argv[]) {
 
     if(argc < 3)
     {
-        printf("Not enough args!\n");
+        printf("Not enough args!\nArgs should be part number (1 and 2) and then the input file\n");
         exit(2);
     }
     else if(argc > 3)
     {
-        printf("Too many args!\n");
+        printf("Too many args!\nArgs should be part number (1 and 2) and then the input file\n");
         exit(2);
     }
 
