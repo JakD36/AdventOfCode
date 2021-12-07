@@ -89,10 +89,11 @@ fn part1(filename: &str)
     // println!("line seg count = {}", line_segs.len());
     for seg in line_segs
     {
-        if seg.start.0 != seg.end.0 && seg.start.1 != seg.end.1
-        {
-            continue;
-        }
+        // Comment out this if statement for part 2
+        // if seg.start.0 != seg.end.0 && seg.start.1 != seg.end.1
+        // {
+        //     continue;
+        // }
         
         for point in seg
         {
