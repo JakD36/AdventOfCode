@@ -1,5 +1,7 @@
 #include <chrono>
 #include <cinttypes>
+#include <cstdio>
+#include <cstring>
 
 uint64_t Part1(const char* filepath);
 uint64_t Part2(const char* filepath);
@@ -7,25 +9,29 @@ int8_t TryFindNumber(const char* contents, int index);
 
 int main()
 {
-    auto start = std::chrono::steady_clock::now();
-
     // char filepath[] = "testInput.txt";
     // char filepath[] = "testInput2.txt";
     char filepath[] = "input.txt";
 
     {
+        auto start = std::chrono::steady_clock::now();
         uint64_t sum = Part1(filepath);
         printf("Part 1 %" PRIu64 "\n", sum);
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        printf("%lld microseconds\n", duration);
     }
+    
 
     {
+        auto start = std::chrono::steady_clock::now();
         uint64_t sum = Part2(filepath);
         printf("Part 2 %" PRIu64 "\n", sum);
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        printf("%lld microseconds\n", duration);
     }
 
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    printf("%d microseconds\n", duration);
     return 0;
 }
 
