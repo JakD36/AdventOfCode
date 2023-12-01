@@ -4,6 +4,9 @@ const eql = std.mem.eql;
 pub fn main() !void {
     var filepath = "input.txt";
 
+    const timer = std.time.Timer;
+    var t = try timer.start();
+
     {
         var sum = try part1(filepath);
         std.debug.print("{d}\n", .{sum});
@@ -13,6 +16,9 @@ pub fn main() !void {
         var sum = try part2(filepath);
         std.debug.print("{d}\n", .{sum});
     }
+
+    const duration: f64 = @floatFromInt(t.read());
+    std.debug.print("{d:.5} ms\n", .{duration / 1000000.0});
 }
 
 fn part1(filepath: []const u8) !u64 {
