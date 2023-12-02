@@ -1,8 +1,13 @@
 #include <chrono>
 #include <cstdio>
 
-int Part1(const char* filepath);
-// uint64_t Part2(const char* filepath);
+struct Results
+{
+    int Part1;
+    int Part2;
+};
+
+Results Part1(const char* filepath);
 
 int main()
 {
@@ -12,27 +17,17 @@ int main()
 
     {
         auto start = std::chrono::steady_clock::now();
-        int sum = Part1(filepath);
-        printf("Part 1 %i\n", sum);
+        Results results = Part1(filepath);
+        printf("Answers %i %i\n", results.Part1, results.Part2);
         auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         printf("%lld microseconds\n", duration);
     }
 
-
-    // {
-    //     auto start = std::chrono::steady_clock::now();
-    //     uint64_t sum = Part2(filepath);
-    //     printf("Part 2 %" PRIu64 "\n", sum);
-    //     auto end = std::chrono::steady_clock::now();
-    //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    //     printf("%lld microseconds\n", duration);
-    // }
-
     return 0;
 }
 
-int Part1(const char* filepath)
+Results Part1(const char* filepath)
 {
     FILE* file;
     file = fopen(filepath,"r");
@@ -40,10 +35,11 @@ int Part1(const char* filepath)
     if(file == nullptr)
     {
         printf("Failed to open %s\n",filepath);
-        return 1;
+        return {-1, -1};
     }
 
     int idSum = 0;
+    int cubePower = 0;
 
     const int size = 256;
     char contents[size];
@@ -56,7 +52,7 @@ int Part1(const char* filepath)
         if(successfullyRead == 0)
         {
             printf("Failed to read line, unexpected format\n");
-            return -1;
+            return {-1, -1};
         }
 
         int maxRed = -1;
@@ -107,9 +103,10 @@ int Part1(const char* filepath)
         {
             idSum += lineId;
         }
+
+        cubePower += maxRed * maxGreen * maxBlue;
     }
 
     fclose(file);
-    return idSum;
+    return {idSum, cubePower};
 }
-
