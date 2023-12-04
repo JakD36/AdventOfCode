@@ -1,3 +1,4 @@
+#include <bit>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -112,12 +113,15 @@ uint64_t Part1(const char* filepath)
 
         checkMask[0] = winMask[0] & testMask[0];
         checkMask[1] = winMask[1] & testMask[1];
-        for(int i = 0; i < 64; ++i) {
-            count += (checkMask[0] & 1llU << i) != 0;
-        }
-        for(int i = 0; i < 64; ++i) {
-            count += (checkMask[1] & 1llU << i) != 0;
-        }
+
+        count += __builtin_popcountll(checkMask[0]);
+        count += __builtin_popcountll(checkMask[1]);
+        // for(int i = 0; i < 64; ++i) {
+            // count += (checkMask[0] & 1llU << i) != 0;
+        // }
+        // for(int i = 0; i < 64; ++i) {
+            // count += (checkMask[1] & 1llU << i) != 0;
+        // }
 
         if(count > 0)
             sum += pow(2, count-1);
@@ -191,12 +195,15 @@ uint64_t Part2(const char* filepath)
 
         checkMask[0] = winMask[0] & testMask[0];
         checkMask[1] = winMask[1] & testMask[1];
-        for(int i = 0; i < 64; ++i) {
-            count += (checkMask[0] & 1llU << i) != 0;
-        }
-        for(int i = 0; i < 64; ++i) {
-            count += (checkMask[1] & 1llU << i) != 0;
-        }
+        // for(int i = 0; i < 64; ++i) {
+        //     count += (checkMask[0] & 1llU << i) != 0;
+        // }
+        // for(int i = 0; i < 64; ++i) {
+        //     count += (checkMask[1] & 1llU << i) != 0;
+        // }
+        count += __builtin_popcountll(checkMask[0]);
+        count += __builtin_popcountll(checkMask[1]);
+        // std::popcount() // or the more portable version
 
          for(int i = line; i < line + count; ++i) {
              bonusCards[i] += (bonusCards[line-1] + 1);
