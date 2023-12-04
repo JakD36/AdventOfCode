@@ -6,3 +6,6 @@ target/
 #C#
 obj/
 bin/
+
+**/cmake-build-debug
+**/cmake-build-release
