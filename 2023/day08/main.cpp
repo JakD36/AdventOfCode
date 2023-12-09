@@ -16,8 +16,8 @@ int main()
         int stepCount = Part1(filepath);
         printf("Part 1 %d\n",stepCount);
         auto end = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        printf("Part 1 %lld ms\n", duration);
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        printf("Part 1 %lld microseconds\n", duration);
     }
 
     {
@@ -25,8 +25,8 @@ int main()
         uint64_t stepCount = Part2(filepath);
         printf("Part 2 %llu\n",stepCount);
         auto end = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        printf("Part 2 %lld ms\n", duration);
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        printf("Part 2 %lld microseconds\n", duration);
     }
 
 }
@@ -63,8 +63,8 @@ int Part1(const char* filepath)
 
     char origin[3], left[3], right[3];
 
-    // uint16_t* dirs = new uint16_t[UINT32_MAX];
-    std::unordered_map<uint16_t, Turns> map;
+    Turns map[UINT16_MAX / 2];
+    // std::unordered_map<uint16_t, Turns> map;
 
     while(fscanf(file, "%3c = (%3c, %3c)\n", origin, left, right) != EOF)
     {
@@ -73,8 +73,6 @@ int Part1(const char* filepath)
         uint16_t rightIdx = Pack(right);
         // printf("%s %s %s\n", origin, left, right);
 
-        // dirs[idx * 2] = leftIdx;
-        // dirs[idx * 2 + 1] = rightIdx;
         map[idx] = Turns{.Left = leftIdx, .Right = rightIdx};
     }
     fclose(file);
@@ -91,16 +89,13 @@ int Part1(const char* filepath)
         ++stepCount;
         switch (instruction) {
             case 'L':
-                // idx = dirs[2 * idx + 0];
-                    idx = map[idx].Left;
+                idx = map[idx].Left;
                 break;
             case 'R':
-                // idx = dirs[2 * idx + 1];
                 idx = map[idx].Right;
                 break;
         }
     }
-    // delete dirs;
 
     return stepCount;
 }
@@ -136,32 +131,6 @@ int64_t gcd(int64_t a, int64_t b)
     return a;
 }
 
-int64_t ExtendedGdc(int64_t a, int64_t b, int64_t& outS, int64_t& outT) {
-    int64_t s = 0, oldS = 1;
-    int64_t r = b, oldR = a;
-
-    while (r != 0)
-    {
-        int64_t quotient = oldR / r;
-        auto tmp1 = r;
-        auto tmp2 = s;
-        r = oldR - quotient * r;
-        s = oldS - quotient * s;
-        oldR = tmp1;
-        oldS = tmp2;
-    }
-
-    int64_t bezout_t = 0;
-    if (b != 0)
-        bezout_t = (oldR - oldS * a) / b;
-    else
-        bezout_t = 0;
-
-    outS = oldS;
-    outT = bezout_t;
-    return oldR;
-}
-
 uint64_t Part2(const char* filepath)
 {
     FILE* file = fopen(filepath, "r");
@@ -171,7 +140,8 @@ uint64_t Part2(const char* filepath)
     fscanf(file, "%s\n\n", contents);
 
     char origin[3], left[3], right[3];
-    std::unordered_map<uint16_t, Turns> map;
+    Turns map[UINT16_MAX / 2];
+    // std::unordered_map<uint16_t, Turns> map;
 
     uint16_t paths[100];
     int cycleSize[100];
@@ -226,17 +196,12 @@ uint64_t Part2(const char* filepath)
                 else if(cycleSize[i] == -1 )
                 {
                     cycleSize[i] = stepCount - offset[i];
-                    if(cycleSize[i] == offset[i])
-                        offset[i] = 0;
-                }
-                else {
                     ++targetReached;
                 }
             }
 
         }
     }
-
 
     int64_t m = cycleSize[0];
     for(int i = 1; i < pathCount; ++i)
