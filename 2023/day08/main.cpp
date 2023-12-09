@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -6,17 +7,26 @@
 int Part1(const char* filepath);
 uint64_t Part2(const char* filepath);
 
-int main() {
+int main()
+{
     // const char* filepath = "testInput3.txt";
     const char* filepath = "input.txt";
     {
-        // int stepCount = Part1(filepath);
-        // printf("Part 1 %d\n",stepCount);
+        auto start = std::chrono::steady_clock::now();
+        int stepCount = Part1(filepath);
+        printf("Part 1 %d\n",stepCount);
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        printf("Part 1 %lld ms\n", duration);
     }
 
     {
+        auto start = std::chrono::steady_clock::now();
         uint64_t stepCount = Part2(filepath);
         printf("Part 2 %llu\n",stepCount);
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        printf("Part 2 %lld ms\n", duration);
     }
 
 }
