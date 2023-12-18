@@ -40,8 +40,8 @@ int Part2(const char* filepath);
 int main()
 {
     // const char* filepath = "testInput.txt";
-    const char* filepath = "testInput3.txt";
-    // const char* filepath = "input.txt";
+    // const char* filepath = "testInput3.txt";
+    const char* filepath = "input.txt";
     {
         auto start = std::chrono::steady_clock::now();
         int sum = Part1(filepath);
@@ -155,70 +155,76 @@ int Part2(const char* filepath)
         startChar = '|';
     }
     else if(diff.x == 1 && diff.y == 1) {
-        startChar = 'L';
-    }
-    else if(diff.x == 1 && diff.y == -1) {
         startChar = 'F';
     }
+    else if(diff.x == 1 && diff.y == -1) {
+        startChar = 'L';
+    }
     else if(diff.x == -1 && diff.y == 1) {
-        startChar = 'J';
+        startChar = '7';
     }
     else if(diff.x == -1 && diff.y == -1) {
-        startChar = '7';
+        startChar = 'J';
     }
 
     int count = 0;
     for(int y = 0; y < rowCount; ++y)
     {
         bool winding = false;
+        char lastVertical =' ';
         for(int x = 1; x < width; ++x)
         {
             bool contains = Contains(nodes, loopLen, {x,y});
-            bool leftContains = Contains(nodes, loopLen, {x-1,y});
-            // if(contains != leftContains)
-            // {
-            //     winding = !winding;
-            // }
-            // else
-            // {
-            //     if(contents[y][x] == '|')
-            //         winding = !winding;
-            // }
+
             if(contains) {
                 switch (contents[y][x])
                 {
                     case '|':
-                    case 'F':
-                    case 'L':
                         winding = !winding;
-                    break;
-                    // case 'J':
-                    // case '7':
-                    //     if(leftContains == false)
-                    break;;
+                        break;
+                    case 'L':
+                        lastVertical = 'L';
+                        break;
+                    case 'F':
+                        lastVertical = 'F';
+                        break;
+                    case '7':
+                        if(lastVertical == 'L')
+                        {
+                            winding = !winding;
+                            lastVertical = ' ';
+                        }
+                        break;
+                    case 'J':
+                        if(lastVertical == 'F')
+                        {
+                            winding = !winding;
+                            lastVertical = ' ';
+                        }
+                        break;
+
                 }
             }
-            else if (contains == false && leftContains)
-                winding = !winding;
+
 
             if(winding && contains == false)
             {
                 ++count;
-                contents[y][x] = 'I';
+                // contents[y][x] = 'I';
                 continue;
             }
-            contents[y][x] = '0';
+            // contents[y][x] = '0';
         }
     }
 
-    for(int y = 0; y < rowCount; ++y)
-    {
-        for(int x = 0; x < width; ++x)
-        {
-            printf("%c", contents[y][x]);
-        }
-        printf("\n");
-    }
+    // for(int y = 0; y < rowCount; ++y)
+    // {
+    //     for(int x = 0; x < width; ++x)
+    //     {
+    //         printf("%c", contents[y][x]);
+    //     }
+    //     printf("\n");
+    // }
 
     return count;
 }
