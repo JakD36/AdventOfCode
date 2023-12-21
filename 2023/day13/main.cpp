@@ -4,13 +4,14 @@
 #include <cstdio>
 #include <cstring>
 
+
 int Part1(const char* filepath);
-// int Part2(const char* filepath);
+int Part2(const char* filepath);
 
 int main()
 {
-    const char* filepath = "testInput.txt";
-    // const char* filepath = "input.txt";
+    // const char* filepath = "testInput.txt";
+    const char* filepath = "input.txt";
     {
         auto start = std::chrono::steady_clock::now();
         int sum = Part1(filepath);
@@ -20,19 +21,20 @@ int main()
         printf("Part 1 %lld microseconds\n", duration);
     }
 
-    // {
-    //     auto start = std::chrono::steady_clock::now();
-    //     int count = Part2(filepath);
-    //     printf("Part 2 %d\n", count);
-    //     auto end = std::chrono::steady_clock::now();
-    //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    //     printf("Part 2 %lld microseconds\n", duration);
-    // }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int count = Part2(filepath);
+        printf("Part 2 %d\n", count);
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        printf("Part 2 %lld microseconds\n", duration);
+    }
 }
 
 
 struct Buffer2D
 {
+    int idx;
     uint32_t Contents[32];
     int Width;
     int Height;
@@ -42,7 +44,8 @@ int TryFindVerticalReflection(Buffer2D& board);
 int TryFindHorizontalReflection(Buffer2D& board);
 uint32_t ReverseBits(uint32_t n, int count);
 
-inline int ProcessVerticalReflection2(Buffer2D& board);
+inline int FindReflectionViaSmudge(Buffer2D& board);
+Buffer2D Transpose(const Buffer2D& board);
 
 void PrintRowDebug(Buffer2D& board, int y, uint32_t leftMask, uint32_t rightMask, int maskWidth, uint32_t left, uint32_t right);
 void PrintMaskComparison(uint32_t leftMask, uint32_t rightMask, int width);
@@ -64,6 +67,7 @@ int Part1(const char* filepath)
             int vertLine = TryFindVerticalReflection(board);
             if(vertLine >= 0)
             {
+                printf("Vert Line %d\n", vertLine);
                 sum += vertLine;
             }
             else
@@ -74,6 +78,7 @@ int Part1(const char* filepath)
                     printf("Error no reflection line found at all\n");
                     return -1;
                 }
+                printf("Horizontal Line %d\n", horizontalLine);
                 sum += 100 * horizontalLine;
             }
 
@@ -108,6 +113,86 @@ int Part1(const char* filepath)
     else
     {
         int horizontalLine = TryFindHorizontalReflection(board);
+        if(horizontalLine < 0)
+        {
+            printf("Error no reflection line found at all\n");
+            return -1;
+        }
+        sum += 100 * horizontalLine;
+    }
+
+    return sum;
+}
+
+int Part2(const char* filepath)
+{
+    FILE* file = fopen(filepath, "r");
+
+    const int k_size = 500;
+    char contents[k_size];
+
+    Buffer2D board {.idx = 0, .Width = -1, .Height = 0};
+
+    int sum = 0;
+    while(fgets(contents, k_size, file) != nullptr)
+    {
+        if(contents[0] == '\n') // Completed board
+        {
+            printf("Max Bits Needed %d\n", board.Width / 2 * board.Height);
+            int vertLine = FindReflectionViaSmudge(board);
+            if(vertLine >= 0)
+            {
+                printf("Vert Line %d\n", vertLine);
+                sum += vertLine;
+            }
+            else
+            {
+                // Transpose the board so I can just reuse the same code
+                board = Transpose(board);
+
+                int horizontalLine = FindReflectionViaSmudge(board);
+                if(horizontalLine < 0)
+                {
+                    printf("Error no reflection line found at all\n");
+                    return -1;
+                }
+                printf("Horizontal Line %d\n", vertLine);
+                sum += 100 * horizontalLine;
+            }
+
+            // Reset board for next
+            board.Width = -1;
+            board.Height = 0;
+            ++board.idx;
+            memset(board.Contents, 0, sizeof(uint32_t) * 32);
+        }
+        else
+        {
+            // Continue adding to current board
+            if(board.Width == -1)
+            {
+                board.Width = strlen(contents) - 1; // -1 removes the \n from the board
+            }
+            for(int i = 0; i < board.Width; ++i)
+                if(contents[i] == '#')
+                    board.Contents[board.Height] |= 1 << i;
+            ++board.Height;
+        }
+    }
+    fclose(file);
+
+
+    // Off by one complete the final board
+    int vertLine = FindReflectionViaSmudge(board);
+    if(vertLine >= 0)
+    {
+        sum += vertLine;
+    }
+    else
+    {
+        // Transpose the board so I can just reuse the same code
+        board = Transpose(board);
+        int horizontalLine = FindReflectionViaSmudge(board);
         if(horizontalLine < 0)
         {
             printf("Error no reflection line found at all\n");
@@ -203,6 +288,16 @@ uint32_t ReverseBits(uint32_t val, int count)
     return rev;
 }
 
+std::bitset<150> ReverseBits(std::bitset<150> val, int count)
+{
+    std::bitset<150> rev = 0;
+    for(int i = 0; i < count; ++i)
+    {
+        rev.set(count - 1 - i, val[i]);
+    }
+    return rev;
+}
+
 void PrintRowDebug(Buffer2D& board, int y, uint32_t leftMask, uint32_t rightMask, int maskWidth, uint32_t left, uint32_t right)
 {
     printf("Board At =======================\n");
@@ -272,4 +367,73 @@ void PrintMaskComparison(uint32_t leftMask, uint32_t rightMask, int width)
     }
     printf("\n");
     printf("================================\n");
+}
+
+void PrintBitSet(std::bitset<150> bits, int count = 150)
+{
+    for(uint64_t j = 0; j < count; ++j)
+    {
+        printf("%d", bits[j] ? 1 : 0);
+    }
+    printf("\n");
+}
+
+inline int FindReflectionViaSmudge(Buffer2D& board)
+{
+    for(int i = 1; i < board.Width; ++i)
+    {
+        int maskWidth = 0;
+        uint32_t leftMask = 0;
+        uint32_t rightMask = 0;
+        int leftOffset = 0;
+        if(i <= board.Width / 2)
+        {
+            maskWidth = i;
+            leftMask = (1 << maskWidth) - 1;
+            rightMask = leftMask << maskWidth;
+        }
+        else
+        {
+            maskWidth = board.Width - i;
+            leftMask = ((1 << maskWidth) - 1) << (i - maskWidth);
+            rightMask = leftMask << maskWidth;
+            leftOffset = i - maskWidth;
+        }
+
+        std::bitset<150> leftSet = 0;
+        std::bitset<150> rightSet = 0;
+        for(int y = 0; y < board.Height; ++y)
+        {
+            std::bitset<150> left = (board.Contents[y] & leftMask) >> leftOffset;
+            std::bitset<150> right = (board.Contents[y] & rightMask) >> (maskWidth + leftOffset);
+            leftSet |= left << (y * maskWidth);
+            rightSet |= ReverseBits(right, maskWidth) << (y * maskWidth);
+        }
+
+        // count the number of matches
+        int count = 0;
+        for(int j = 0; j < 150; ++j)
+            if(leftSet[j] == rightSet[j])
+                ++count;
+
+        if(150 - count == 1)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+Buffer2D Transpose(const Buffer2D& board)
+{
+    Buffer2D t = {.idx = board.idx, .Width = board.Height, .Height = board.Width};
+    memset(t.Contents, 0, sizeof(uint32_t) * 32);
+    for(int x = 0; x < board.Width; ++x)
+    {
+        for(int y = 0; y < board.Height; ++y)
+        {
+            t.Contents[x] |= ((board.Contents[y] & 1 << x) != 0) << y;
+        }
+    }
+    return t;
 }
