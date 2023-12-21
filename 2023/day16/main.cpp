@@ -12,10 +12,10 @@ int Part2(const char* filepath);
 
 enum class Dir : uint8_t
 {
-    UP,
-    LEFT,
-    DOWN,
-    RIGHT
+    UP = 1 << 0,
+    LEFT = 1 << 1,
+    DOWN = 1 << 2,
+    RIGHT = 1 << 3
 };
 
 struct Ray
@@ -185,9 +185,10 @@ int SolveForRay(const char* board, int width, int height, Ray ray)
     int rayCount = 1;
     const int rayCapacity = 500;
     Ray rays[rayCapacity] = {ray};
-    std::unordered_set<size_t> visited;
+    // std::unordered_set<size_t> visited;
 
-    std::bitset<k_size*k_size> energised;
+    uint8_t flowmap[k_size*k_size];
+    memset(flowmap, 0, sizeof(uint8_t) * k_size * k_size);
     while(rayCount > 0)
     {
         Ray ray = rays[rayStart];
@@ -196,17 +197,17 @@ int SolveForRay(const char* board, int width, int height, Ray ray)
         bool endOfTravel = false;
         while(endOfTravel == false)
         {
-            if(visited.contains(Hash(ray)))
+            if( (flowmap[ray.Idx] & (uint8_t)ray.Dir) != 0)
             {
                 break;
             }
 
-            energised.set(ray.Idx, true);
+            flowmap[ray.Idx] |= (uint8_t)ray.Dir;
 
             switch (board[ray.Idx])
             {
                 case '/':
-                    visited.insert(Hash(ray));
+                    // visited.insert(Hash(ray));
                     switch (ray.Dir)
                     {
                         case Dir::UP:
@@ -224,7 +225,7 @@ int SolveForRay(const char* board, int width, int height, Ray ray)
                     }
                 break;
                 case '\\':
-                    visited.insert(Hash(ray));
+                    // visited.insert(Hash(ray));
                     switch (ray.Dir)
                     {
                         case Dir::UP:
@@ -242,7 +243,7 @@ int SolveForRay(const char* board, int width, int height, Ray ray)
                     }
                 break;
                 case '|':
-                    visited.insert(Hash(ray));
+                    // visited.insert(Hash(ray));
                     switch (ray.Dir)
                     {
                         case Dir::LEFT:
@@ -258,7 +259,7 @@ int SolveForRay(const char* board, int width, int height, Ray ray)
                     }
                 break;
                 case '-':
-                    visited.insert(Hash(ray));
+                    // visited.insert(Hash(ray));
                     switch (ray.Dir)
                     {
                         case Dir::UP:
@@ -279,5 +280,13 @@ int SolveForRay(const char* board, int width, int height, Ray ray)
             endOfTravel = !TryMoveRay(ray, width, height);
         }
     }
-    return energised.count();
+
+    int count = 0;
+    for(int i = 0; i < width * height; ++i)
+    {
+        if(flowmap[i] > 0)
+            ++count;
+    }
+
+    return count;
 }
