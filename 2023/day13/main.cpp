@@ -67,7 +67,6 @@ int Part1(const char* filepath)
             int vertLine = TryFindVerticalReflection(board);
             if(vertLine >= 0)
             {
-                printf("Vert Line %d\n", vertLine);
                 sum += vertLine;
             }
             else
@@ -78,7 +77,6 @@ int Part1(const char* filepath)
                     printf("Error no reflection line found at all\n");
                     return -1;
                 }
-                printf("Horizontal Line %d\n", horizontalLine);
                 sum += 100 * horizontalLine;
             }
 
@@ -138,11 +136,9 @@ int Part2(const char* filepath)
     {
         if(contents[0] == '\n') // Completed board
         {
-            printf("Max Bits Needed %d\n", board.Width / 2 * board.Height);
             int vertLine = FindReflectionViaSmudge(board);
             if(vertLine >= 0)
             {
-                printf("Vert Line %d\n", vertLine);
                 sum += vertLine;
             }
             else
@@ -156,7 +152,6 @@ int Part2(const char* filepath)
                     printf("Error no reflection line found at all\n");
                     return -1;
                 }
-                printf("Horizontal Line %d\n", vertLine);
                 sum += 100 * horizontalLine;
             }
 
@@ -416,7 +411,8 @@ inline int FindReflectionViaSmudge(Buffer2D& board)
             if(leftSet[j] == rightSet[j])
                 ++count;
 
-        if(150 - count == 1)
+
+        if(150 - (leftSet ^ ~rightSet).count() == 1)
         {
             return i;
         }
