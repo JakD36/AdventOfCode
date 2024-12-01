@@ -21,7 +21,7 @@ void Part1(string filepath)
         sum += Math.Abs(b[i] - a[i]);
     }
     
-    Console.WriteLine($"Part 1 {sum} in {sw.ElapsedTicks} ticks");
+    Console.WriteLine($"Part 1 {sum} in {sw.Elapsed.Nanoseconds} ns");
 }
 
 void Part2(string filepath)
@@ -67,7 +67,7 @@ void Part2(string filepath)
         }
     }
     
-    Console.WriteLine($"Part 2 {similarity} in {sw.ElapsedTicks} ticks");
+    Console.WriteLine($"Part 2 {similarity} in {sw.Elapsed.Nanoseconds} ns");
 }
 
 void ParseLines(string[] lines, int[] a, int[] b)
