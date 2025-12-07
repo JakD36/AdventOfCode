@@ -65,24 +65,17 @@ public class App
                     break;
                 case 'L':
                 {
-                    // There has to be a better solution for this but I'm tired
                     int increment = 0;
-                    int current = value;
+                    increment += rotation / dialSize;
+
+                    int next = (value - (rotation % dialSize) + dialSize) % dialSize;
+                    if ((value != 0 && next > value) || next == 0)
                     {
-                        for (int i = 0; i < rotation; ++i)
-                        {
-                            current = (current - 1 + dialSize) % dialSize;
-                            if (current == 0)
-                            {
-                                ++increment;
-                            }
-                        }    
+                        ++increment;
                     }
-                    // int old = value;
-                    count += increment;
-                    value = ((value - rotation) % dialSize + dialSize) % dialSize;
                     
-                    // Console.WriteLine($"{old} {rotation} {current} {value}");
+                    count += increment;
+                    value = next;
                 }
                     break;
             }
