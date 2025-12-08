@@ -1,19 +1,22 @@
 ﻿
+using System.Diagnostics;
 using System.Text;
 
 public class App
 {
     public static void Main()
     {
-        const string filepath = "testInput.txt";
-        // const string filepath = "input.txt";
+        // const string filepath = "testInput.txt";
+        const string filepath = "input.txt";
+        
         Part1(filepath);
-        // Part2(filepath);
+        Part2(filepath);
     }
 
     public static void Part1(string filepath)
     {
         string input = File.ReadAllText(filepath);
+        Stopwatch sw = Stopwatch.StartNew();
         string[] ranges = input.Split(',');
 
         ulong answer = 0;
@@ -63,8 +66,60 @@ public class App
         
         // Console.WriteLine(log.ToString());
         // Console.WriteLine(); 
-        Console.WriteLine($"Answer {answer}");
+        Console.WriteLine($"Answer {answer} in {sw.ElapsedMilliseconds} ms");
     }
-    
 
+    private static void Part2(string filepath)
+    {
+        string input = File.ReadAllText(filepath);
+        Stopwatch sw = Stopwatch.StartNew();
+        string[] ranges = input.Split(',');
+
+        ulong answer = 0;
+
+        var covered = new HashSet<ulong>();
+        
+        foreach (var range in ranges)
+        {
+            string[] minmax = range.Split('-');
+            
+            ulong min = ulong.Parse(minmax[0]);
+            ulong max = ulong.Parse(minmax[1]);
+
+            for (int i = 1; i < 20; ++i) // just picked a large max to make sure I was covered
+            {
+                ulong divider = (ulong)Math.Pow(10, i);
+                ulong start = min / divider;
+                ulong end = max / divider;
+                
+                if(end == 0)
+                    break;
+                
+                for (ulong j = start; j <= end; ++j)
+                {
+                    if(j == 0)
+                        continue;
+                    
+                    ulong val = j;
+
+                    int increments = (int)(Math.Log10(j) + 1);
+                    
+                    for (int k = increments; k <= i; k+=increments)
+                    {
+                        val += (ulong)Math.Pow(10, k) * j;
+                    }
+
+                    if (covered.Add(val) && val >= min && val <= max)
+                    {
+                        // Console.WriteLine($"\t{val}");
+                        answer += val;
+                    }
+                }
+            }
+            covered.Clear();
+        }
+        
+        // Console.WriteLine();
+        Console.WriteLine($"Answer {answer} in {sw.ElapsedMilliseconds} ms");
+    }
 }
